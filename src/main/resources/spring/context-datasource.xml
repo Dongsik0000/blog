@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- globals.properties 의 값은 ${ENV_VAR:기본값} 형태로 환경변수를 참조한다 (서버: /etc/blog/app.env) -->
+    <context:property-placeholder location="classpath:/egovProps/globals.properties"/>
+
+    <bean id="dataSource-postgresql" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+        <!-- Tomcat 이 DriverManager 를 먼저 초기화해서 웹앱 드라이버가 자동 등록되지 않으므로 명시 -->
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <property name="jdbcUrl" value="${Globals.Blog.Postgre.Url}"/>
+        <property name="username" value="${Globals.Blog.Postgre.UserName}"/>
+        <property name="password" value="${Globals.Blog.Postgre.Password}"/>
+        <property name="maximumPoolSize" value="3"/>
+        <property name="connectionTimeout" value="5000"/>
+        <!-- DB 가 꺼져 있어도 앱은 뜬다. 글은 DB 를 쓰지 않으므로 보이고, 댓글 요청만 실패한다 -->
+        <property name="initializationFailTimeout" value="-1"/>
+    </bean>
+
+    <bean id="sqlSessionFactory-blog-postgre" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource-postgresql"/>
+        <property name="configLocation" value="classpath:/sqlmap/mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath:/sqlmap/mappers/blog/**/*.xml"/>
+    </bean>
+
+    <bean id="sqlSession-blog-postgre" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory-blog-postgre"/>
+    </bean>
+
+    <!-- 트랜잭션 매니저는 두지 않는다. 댓글 작업은 쿼리 1개씩이라 묶을 것이 없다 -->
+
+    <!-- 비밀번호 해시 -->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+</beans>

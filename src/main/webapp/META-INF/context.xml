@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 관리자 세션 쿠키를 다른 사이트에서 온 POST 에 싣지 않는다 (ledger 와 같은 설정) -->
+<Context>
+    <CookieProcessor sameSiteCookies="lax" />
+</Context>

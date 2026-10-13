@@ -1,0 +1,21 @@
+name: blog
+
+# 호스트 PostgreSQL(127.0.0.1:5432) 에 붙기 위해 host 네트워크를 쓴다. Tomcat 은 127.0.0.1:8082 에만 열리고(Dockerfile)
+# 외부 요청은 nginx /blog/ 가 받는다 (deploy/nginx-blog.conf). 비밀값은 /etc/blog/app.env (deploy/app.env.example 참고).
+services:
+  app:
+    build:
+      context: .
+    image: blog:local
+    container_name: blog
+    network_mode: host
+    env_file:
+      - /etc/blog/app.env
+    # 관리 화면에서 올린 대표 이미지. 컨테이너를 다시 만들어도 남도록 호스트 폴더에 둔다 (없으면 Docker 가 만든다)
+    volumes:
+      - /var/lib/blog/uploads:/var/lib/blog/uploads
+    environment:
+      JAVA_OPTS: -Xms128m -Xmx384m -Duser.timezone=Asia/Seoul
+      BLOG_LOG_LEVEL: INFO
+    mem_limit: 640m
+    restart: unless-stopped

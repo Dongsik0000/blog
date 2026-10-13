@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+    <!-- 플레이스홀더 설정은 컨텍스트마다 따로 필요하다. 루트(context-datasource.xml)의 것은 이 컨텍스트의 @Value 에 적용되지 않는다 -->
+    <context:property-placeholder location="classpath:/egovProps/globals.properties"/>
+    <mvc:annotation-driven/>
+    <context:component-scan base-package="blog"/>
+    <mvc:resources mapping="/resources/**" location="/resources/">
+        <mvc:cache-control no-cache="true"/>
+    </mvc:resources>
+    <!-- 관리 화면에서 올린 대표 이미지. 파일 이름이 무작위라 내용이 바뀌지 않으므로 오래 캐시한다 -->
+    <mvc:resources mapping="/uploads/**" location="file:${Globals.Blog.UploadDir}/">
+        <mvc:cache-control max-age="2592000" cache-public="true"/>
+    </mvc:resources>
+
+    <!-- 대표 이미지 업로드(multipart). 크기 제한은 web.xml 의 multipart-config -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver"/>
+
+    <mvc:interceptors>
+        <!-- 모든 요청: 관리자 로그인 여부를 request 속성 isAdmin 에 넣고, /admin/** 는 로그인해야 통과 -->
+        <bean class="blog.interceptor.AdminInterceptor"/>
+        <!-- POST 는 Ajax 만: 다른 사이트의 폼 전송(CSRF) 차단 -->
+        <mvc:interceptor>
+            <mvc:mapping path="/comment/**"/>
+            <mvc:mapping path="/auth/**"/>
+            <mvc:mapping path="/admin/**"/>
+            <bean class="blog.interceptor.ApiRequestInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+    <!-- 홈·글 목록·글 본문은 PostController. 데이터가 없는 소개 화면만 view-controller 로 둔다 -->
+    <mvc:view-controller path="/about" view-name="about/aboutMain"/>
+
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/blog/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+</beans>
