@@ -51,7 +51,7 @@ sources:
 | `category` | 예 | `development`, `news`, `gear` 중 하나 |
 | `publishedAt` | 예 | `"yyyy-MM-dd"`, `Asia/Seoul` 기준. **따옴표 필수**(없으면 YAML 이 날짜 객체로 읽어 오류) |
 | `coverImage` | 아니요 | AI 가 함께 커밋한 이미지는 `/resources/images/posts/파일명`(파일은 `content/images/`). 가져올 때 파일이 없거나 이미지가 아니면 표지 없이 등록되고 서버 로그에 경고가 남는다. 관리 화면에서 올린 이미지는 `/uploads/...` |
-| `coverAlt`, `coverCaption` | 아니요 | `coverImage` 가 있으면 `coverAlt` 필수 |
+| `coverAlt`, `coverCaption` | 아니요 | `coverImage` 가 있으면 `coverAlt` 필수. 이미지 없이 `coverAlt` 초안만 미리 넣어 둘 수도 있다(관리 화면에서 이미지를 올릴 때 설명 칸에 들어가 있음) |
 | `coverPrompt` | 아니요 | 가져올 때 이 글에 "DevMonster" 의 "대표 이미지 프롬프트" 댓글로 한 번 등록되고, 댓글 목록 맨 위에 보인다 |
 | `draft` | 아니요 | `true` 면 임시저장으로 가져온다(관리자만 보임). 없으면 바로 발행 |
 | `hashtags` | 아니요 | 글자 목록. 앞의 `#` 는 빼도 되고 붙여도 된다 |
