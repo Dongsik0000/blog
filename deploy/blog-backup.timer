@@ -1,0 +1,12 @@
+# /etc/systemd/system/blog-backup.timer
+#   sudo systemctl daemon-reload && sudo systemctl enable --now blog-backup.timer
+# 서버가 그 시각에 꺼져 있었으면 켜진 뒤 한 번 따라잡는다(Persistent)
+[Unit]
+Description=Daily blog backup at 04:20 KST
+
+[Timer]
+OnCalendar=*-*-* 04:20:00 Asia/Seoul
+Persistent=true
+
+[Install]
+WantedBy=timers.target
