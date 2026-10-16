@@ -123,6 +123,7 @@ docker compose up -d --build
 - nginx 설정은 `deploy/nginx-blog.conf` 파일 머리말을 따릅니다. 이미지 업로드를 위해 요청 크기를 6MB 까지 받습니다.
 - 업로드한 이미지는 호스트 `/var/lib/blog/uploads` 에 남습니다. DB 와 함께 백업 대상입니다.
 - `/etc/blog/app.env` 를 바꾼 뒤에는 `docker compose up -d --force-recreate` 로 컨테이너를 다시 만듭니다.
+- `main` 에 커밋이 생기면 GitHub Actions(`.github/workflows/deploy.yml`)가 테스트 후 서버에서 `deploy/deploy.sh` 를 실행합니다(받기 → 빌드 → 재시작 → 응답 확인). 저장소 Secrets 에 `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_HOST`, `DEPLOY_USER` 가 필요합니다.
 
 </details>
 
