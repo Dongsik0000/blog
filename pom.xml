@@ -71,6 +71,12 @@
             <artifactId>commonmark</artifactId>
             <version>0.30.0</version>
         </dependency>
+        <!-- 본문의 표(| 칸 |). commonmark 와 같은 버전 -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-gfm-tables</artifactId>
+            <version>0.30.0</version>
+        </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
@@ -134,6 +140,14 @@
                             <targetPath>WEB-INF/posts</targetPath>
                             <includes>
                                 <include>**/*.md</include>
+                            </includes>
+                        </resource>
+                        <!-- 시리즈 정의(제목·장 순서). 글의 series·chapter 가 이 파일을 가리킨다 -->
+                        <resource>
+                            <directory>content</directory>
+                            <targetPath>WEB-INF</targetPath>
+                            <includes>
+                                <include>series.yml</include>
                             </includes>
                         </resource>
                         <!-- AI(GPT)가 글과 함께 커밋한 대표 이미지. 글의 coverImage 는 /resources/images/posts/파일명 -->

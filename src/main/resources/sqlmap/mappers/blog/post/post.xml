@@ -11,7 +11,10 @@
         summary AS "summary",
         cover_image AS "coverImage",
         status AS "status",
-        to_char(published_at, 'YYYY-MM-DD') AS "publishedAt"
+        to_char(published_at, 'YYYY-MM-DD') AS "publishedAt",
+        series AS "series",
+        chapter AS "chapter",
+        series_order AS "seriesOrder"
     </sql>
 
     <!-- 발행된 글 최신순. category 가 null 이면 전체 -->
@@ -43,6 +46,29 @@
         FROM blog_post
         WHERE slug = #{slug} AND deleted_at IS NULL
           <if test="!includeDraft">AND status = 'PUBLISHED'</if>
+    </select>
+
+    <!-- 시리즈의 글. includeDraft 가 false 면 발행된 글만. 장 순서는 서비스가 series.yml 기준으로 다시 정렬한다 -->
+    <select id="selectSeriesPosts" parameterType="map" resultType="java.util.HashMap">
+        SELECT id AS "id",
+               slug AS "slug",
+               title AS "title",
+               summary AS "summary",
+               status AS "status",
+               chapter AS "chapter",
+               series_order AS "seriesOrder"
+        FROM blog_post
+        WHERE series = #{series} AND deleted_at IS NULL
+          <if test="!includeDraft">AND status = 'PUBLISHED'</if>
+        ORDER BY series_order, id
+    </select>
+
+    <!-- 시리즈별 발행된 글 수 (개발 기록 위의 시리즈 카드) -->
+    <select id="selectSeriesCounts" resultType="java.util.HashMap">
+        SELECT series AS "series", count(*) AS "postCount"
+        FROM blog_post
+        WHERE series IS NOT NULL AND status = 'PUBLISHED' AND deleted_at IS NULL
+        GROUP BY series
     </select>
 
     <!-- 관리 화면 목록: 임시저장 포함, 최신순 -->
@@ -77,17 +103,17 @@
 
     <insert id="insertPost" parameterType="map" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO blog_post (slug, title, category, summary, body, cover_image, cover_alt, cover_caption, cover_prompt,
-                               hashtags, sources, status, published_at)
+                               hashtags, sources, status, published_at, series, chapter, series_order)
         VALUES (#{slug}, #{title}, #{category}, #{summary}, #{body}, #{coverImage}, #{coverAlt}, #{coverCaption}, #{coverPrompt},
-                #{hashtags}, #{sources}, #{status}, CAST(#{publishedAt} AS DATE))
+                #{hashtags}, #{sources}, #{status}, CAST(#{publishedAt} AS DATE), #{series}, #{chapter}, #{seriesOrder})
     </insert>
 
     <!-- content/posts 의 Markdown 가져오기. 같은 slug 가 있으면(지운 글 포함) 건너뛴다. 건너뛰면 id 가 채워지지 않는다 -->
     <insert id="insertImportedPost" parameterType="map" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO blog_post (slug, title, category, summary, body, cover_image, cover_alt, cover_caption, cover_prompt,
-                               hashtags, sources, status, published_at)
+                               hashtags, sources, status, published_at, series, chapter, series_order)
         VALUES (#{slug}, #{title}, #{category}, #{summary}, #{body}, #{coverImage}, #{coverAlt}, #{coverCaption}, #{coverPrompt},
-                #{hashtags}, #{sources}, #{status}, CAST(#{publishedAt} AS DATE))
+                #{hashtags}, #{sources}, #{status}, CAST(#{publishedAt} AS DATE), #{series}, #{chapter}, #{seriesOrder})
         ON CONFLICT (slug) DO NOTHING
     </insert>
 
@@ -96,6 +122,7 @@
         SET slug = #{slug}, title = #{title}, category = #{category}, summary = #{summary}, body = #{body},
             cover_image = #{coverImage}, cover_alt = #{coverAlt}, cover_caption = #{coverCaption}, cover_prompt = #{coverPrompt},
             hashtags = #{hashtags}, sources = #{sources}, status = #{status}, published_at = CAST(#{publishedAt} AS DATE),
+            series = #{series}, chapter = #{chapter}, series_order = #{seriesOrder},
             updated_at = now()
         WHERE id = #{id} AND deleted_at IS NULL
     </update>

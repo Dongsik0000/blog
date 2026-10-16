@@ -74,7 +74,7 @@ App.adminPostList = (function(){
 					view = el('a', 'text-link', '보기'),
 					edit = el('a', 'button', '수정');
 
-				var label = el('p', 'admin-post-label', post.categoryLabel);
+				var label = el('p', 'admin-post-label', post.categoryLabel + (post.seriesTitle ? ' · ' + post.seriesTitle : ''));
 				if (post.status === 'DRAFT') label.appendChild(el('span', 'status-badge', '임시저장'));
 
 				title.href = url.edit + post.id;

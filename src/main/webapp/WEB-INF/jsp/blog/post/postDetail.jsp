@@ -22,6 +22,18 @@
                     <c:if test="${requestScope.isAdmin}"><a class="article-edit" href="<c:url value='/admin/posts/${post.id}'/>">수정</a></c:if>
                 </div>
             </header>
+            <c:if test="${not empty post.seriesTitle}">
+                <nav class="series-box" aria-label="시리즈 목차">
+                    <p class="series-box-label"><c:url var="seriesUrl" value="/series/${post.series}"/><a href="<c:out value='${seriesUrl}'/>"><c:out value="${post.seriesTitle}"/></a> <span aria-hidden="true">›</span> <c:out value="${post.chapterTitle}"/></p>
+                    <details>
+                        <summary>이 장의 글 <c:out value="${fn:length(post.chapterPosts)}"/>개</summary>
+                        <ol><c:forEach var="p" items="${post.chapterPosts}"><li><c:choose>
+                            <c:when test="${p.id eq post.id}"><span aria-current="page"><c:out value="${p.title}"/></span></c:when>
+                            <c:otherwise><c:url var="chapterPostUrl" value="/posts/${p.slug}"/><a href="<c:out value='${chapterPostUrl}'/>"><c:out value="${p.title}"/></a></c:otherwise>
+                        </c:choose></li></c:forEach></ol>
+                    </details>
+                </nav>
+            </c:if>
             <t:articleToc blocks="${post.blocks}"/>
             <c:if test="${not empty post.coverImage and (fn:startsWith(post.coverImage, '/resources/images/') or fn:startsWith(post.coverImage, '/uploads/')) and not fn:contains(post.coverImage, '..')}">
                 <c:url var="coverUrl" value="${post.coverImage}"/>
@@ -38,7 +50,13 @@
                         <c:when test="${block.type eq 'paragraph'}"><p><t:inlineText segments="${block.segments}" text="${block.text}"/></p></c:when>
                         <c:when test="${block.type eq 'quote'}"><blockquote><t:inlineText segments="${block.segments}" text="${block.text}"/></blockquote></c:when>
                         <c:when test="${block.type eq 'code'}"><pre tabindex="0" aria-label="코드 예제"><code><c:out value="${block.text}"/></code></pre></c:when>
+                        <c:when test="${block.type eq 'list' and block.ordered}"><ol><c:forEach var="item" items="${block.items}"><li><t:inlineText segments="${item.segments}" text="${item.text}"/></li></c:forEach></ol></c:when>
                         <c:when test="${block.type eq 'list'}"><ul><c:forEach var="item" items="${block.items}"><li><t:inlineText segments="${item.segments}" text="${item.text}"/></li></c:forEach></ul></c:when>
+                        <c:when test="${block.type eq 'table'}"><div class="table-wrap" tabindex="0" role="region" aria-label="표"><table>
+                            <thead><tr><c:forEach var="cell" items="${block.head}"><th scope="col"><t:inlineText segments="${cell}"/></th></c:forEach></tr></thead>
+                            <tbody><c:forEach var="row" items="${block.rows}"><tr><c:forEach var="cell" items="${row}"><td><t:inlineText segments="${cell}"/></td></c:forEach></tr></c:forEach></tbody>
+                        </table></div></c:when>
+                        <c:when test="${block.type eq 'image'}"><c:url var="figureUrl" value="${block.src}"/><figure class="article-figure"><img src="<c:out value='${figureUrl}'/>" alt="<c:out value='${block.alt}'/>" loading="lazy" decoding="async"></figure></c:when>
                     </c:choose>
                 </c:forEach>
                 <c:if test="${not empty post.sources}">
@@ -55,6 +73,12 @@
                 </c:if>
                 <c:if test="${not empty post.hashtags}"><div class="article-tags" aria-label="해시태그"><c:forEach var="tag" items="${post.hashtags}"><span>#<c:out value="${tag}"/></span></c:forEach></div></c:if>
             </div>
+            <c:if test="${not empty post.seriesPrev or not empty post.seriesNext}">
+                <nav class="series-pager" aria-label="시리즈 이전·다음 글">
+                    <c:if test="${not empty post.seriesPrev}"><c:url var="prevUrl" value="/posts/${post.seriesPrev.slug}"/><a class="series-pager-prev" href="<c:out value='${prevUrl}'/>"><span>이전 글</span><strong><c:out value="${post.seriesPrev.title}"/></strong></a></c:if>
+                    <c:if test="${not empty post.seriesNext}"><c:url var="nextUrl" value="/posts/${post.seriesNext.slug}"/><a class="series-pager-next" href="<c:out value='${nextUrl}'/>"><span>다음 글</span><strong><c:out value="${post.seriesNext.title}"/></strong></a></c:if>
+                </nav>
+            </c:if>
             <nav class="article-end" aria-label="글 탐색"><span>읽어주셔서 감사합니다.</span><a class="text-link" href="<c:url value='/posts'/>">모든 글 보기 <span aria-hidden="true">→</span></a></nav>
             <t:commentSection slug="${post.slug}"/>
         </article>

@@ -51,6 +51,17 @@ public class PostController {
         return "post/postDetail";
     }
 
+    // 시리즈 화면: 장별 목차. 임시저장 글은 관리자에게만 보인다
+    @RequestMapping(value = "series/{slug}", method = {RequestMethod.GET, RequestMethod.POST})
+    public String series(@PathVariable("slug") String slug, HttpServletRequest request, Model model) {
+        Map<String, Object> series = postService.selectSeries(slug, Boolean.TRUE.equals(request.getAttribute("isAdmin")));
+        if (series == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        model.addAttribute("series", series);
+        return "post/seriesMain";
+    }
+
     private static int parsePage(String page) {
         try {
             return page == null ? 1 : Integer.parseInt(page);

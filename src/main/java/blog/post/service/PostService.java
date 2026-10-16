@@ -23,6 +23,12 @@ public interface PostService {
     // 댓글이 쓰는 글 id. 없으면 null
     Long selectPostId(String slug, boolean includeDraft);
 
+    // 시리즈 정의 목록 (content/series.yml): [{slug, title, summary, stack, repo, chapters}]. 사이드바·편집 화면용
+    List<Map<String, Object>> selectSeriesList();
+
+    // 시리즈 화면: 정의 + 장별 글 목록(읽는 순서) + postCount, firstPost. 없는 시리즈면 null
+    Map<String, Object> selectSeries(String slug, boolean includeDraft);
+
     // ── 관리 화면 (Ajax) ──
 
     Response selectAdminPostList() throws Exception;

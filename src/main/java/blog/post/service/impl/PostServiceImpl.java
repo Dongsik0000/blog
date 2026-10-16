@@ -8,25 +8,9 @@ import blog.post.service.PostService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletContext;
-import org.commonmark.node.Block;
-import org.commonmark.node.BlockQuote;
-import org.commonmark.node.Code;
-import org.commonmark.node.Emphasis;
-import org.commonmark.node.FencedCodeBlock;
-import org.commonmark.node.HardLineBreak;
-import org.commonmark.node.Heading;
-import org.commonmark.node.HtmlInline;
-import org.commonmark.node.Image;
-import org.commonmark.node.IndentedCodeBlock;
-import org.commonmark.node.ListBlock;
-import org.commonmark.node.Node;
-import org.commonmark.node.Paragraph;
-import org.commonmark.node.SoftLineBreak;
-import org.commonmark.node.StrongEmphasis;
-import org.commonmark.node.Text;
-import org.commonmark.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +34,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -61,13 +46,14 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// 글 조회·저장·삭제, 대표 이미지 업로드, Markdown 가져오기, 본문 Markdown → 화면 블록 변환
+// 글 조회·저장·삭제, 시리즈, 대표 이미지 업로드, Markdown 가져오기. 본문 변환은 MarkdownBlocks, 시리즈 정의는 SeriesCatalog
 @Service("postService")
 public class PostServiceImpl implements PostService {
 
     private static final Logger logger = LoggerFactory.getLogger(PostServiceImpl.class);
 
     private static final String POSTS_DIR = "/WEB-INF/posts/";
+    private static final String SERIES_FILE = "/WEB-INF/series.yml";
     private static final int PAGE_SIZE = 10;
     private static final Pattern FRONT_MATTER = Pattern.compile("\\A---\\n(.*?)\\n---(?:\\n|\\z)(.*)\\z", Pattern.DOTALL);
     private static final Pattern SLUG = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
@@ -78,7 +64,6 @@ public class PostServiceImpl implements PostService {
     private static final Set<String> STATUSES = Set.of("DRAFT", "PUBLISHED");
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
 
-    private static final Parser MARKDOWN = Parser.builder().build();
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -93,6 +78,25 @@ public class PostServiceImpl implements PostService {
 
     @Value("${Globals.Blog.UploadDir}")
     private String uploadDir;
+
+    private SeriesCatalog seriesCatalog = SeriesCatalog.empty();
+
+    // 시리즈 정의를 읽는다. 파일이 없으면 시리즈 없이 동작하고, 형식이 틀리면 앱 시작을 막는다
+    @PostConstruct
+    void loadSeries() throws IOException {
+        try (InputStream in = servletContext.getResourceAsStream(SERIES_FILE)) {
+            if (in == null) {
+                logger.warn("{} 가 없어 시리즈 없이 시작합니다.", SERIES_FILE);
+                return;
+            }
+            loadSeries(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+        }
+    }
+
+    // 테스트에서도 부른다
+    void loadSeries(String yaml) {
+        seriesCatalog = SeriesCatalog.parse(yaml);
+    }
 
     // ───────────────────────── 공개 화면 ─────────────────────────
 
@@ -113,6 +117,9 @@ public class PostServiceImpl implements PostService {
         result.put("currentPage", current);
         result.put("totalPages", totalPages);
         result.put("selectedCategory", validCategory == null ? "" : validCategory);
+        if ("development".equals(validCategory)) {
+            result.put("seriesCards", selectSeriesCards()); // 개발 기록 위에 시리즈 묶음을 보인다
+        }
         return result;
     }
 
@@ -126,7 +133,90 @@ public class PostServiceImpl implements PostService {
         post.put("hashtags", splitHashtags((String) post.get("hashtags")));
         post.put("sources", readSources((String) post.get("sources")));
         post.put("blocks", toBlocks((String) post.get("body")));
+        addSeriesNavigation(post, includeDraft);
         return post;
+    }
+
+    @Override
+    public List<Map<String, Object>> selectSeriesList() {
+        return seriesCatalog.list();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> selectSeries(String slug, boolean includeDraft) {
+        Map<String, Object> meta = slug == null ? null : seriesCatalog.find(slug);
+        if (meta == null) {
+            return null;
+        }
+        List<Map<String, Object>> posts = seriesPosts(slug, includeDraft);
+        List<Map<String, Object>> chapters = new ArrayList<>();
+        for (Map<String, Object> chapter : (List<Map<String, Object>>) meta.get("chapters")) {
+            List<Map<String, Object>> inChapter = posts.stream().filter(p -> chapter.get("id").equals(p.get("chapter"))).toList();
+            if (!inChapter.isEmpty()) {
+                chapters.add(Map.of("id", chapter.get("id"), "title", chapter.get("title"), "posts", inChapter));
+            }
+        }
+        Map<String, Object> series = new HashMap<>(meta);
+        series.put("chapters", chapters);
+        series.put("postCount", posts.size());
+        series.put("firstPost", posts.isEmpty() ? null : posts.get(0));
+        return series;
+    }
+
+    // 시리즈의 글을 읽는 순서로: 장 순서(series.yml) → 장 안 순서 → id
+    private List<Map<String, Object>> seriesPosts(String slug, boolean includeDraft) {
+        Map<String, Object> param = new HashMap<>();
+        param.put("series", slug);
+        param.put("includeDraft", includeDraft);
+        List<Map<String, Object>> posts = new ArrayList<>(postDAO.selectSeriesPosts(param));
+        posts.sort(Comparator.<Map<String, Object>>comparingInt(p -> {
+                    int index = seriesCatalog.chapterIndex(slug, (String) p.get("chapter"));
+                    return index < 0 ? Integer.MAX_VALUE : index;
+                })
+                .thenComparingInt(p -> ((Number) p.get("seriesOrder")).intValue())
+                .thenComparingLong(p -> ((Number) p.get("id")).longValue()));
+        return posts;
+    }
+
+    // 글 화면: 시리즈 이름·장 이름, 이 장의 글 목록, 시리즈 안의 이전/다음 글
+    private void addSeriesNavigation(Map<String, Object> post, boolean includeDraft) {
+        String slug = (String) post.get("series");
+        Map<String, Object> meta = slug == null ? null : seriesCatalog.find(slug);
+        if (meta == null) {
+            return;
+        }
+        String chapter = (String) post.get("chapter");
+        List<Map<String, Object>> ordered = seriesPosts(slug, includeDraft);
+        int index = -1;
+        for (int i = 0; i < ordered.size(); i++) {
+            if (ordered.get(i).get("id").equals(post.get("id"))) {
+                index = i;
+            }
+        }
+        post.put("seriesTitle", meta.get("title"));
+        post.put("chapterTitle", seriesCatalog.chapterTitle(slug, chapter));
+        post.put("chapterPosts", ordered.stream().filter(p -> chapter != null && chapter.equals(p.get("chapter"))).toList());
+        post.put("seriesPrev", index > 0 ? ordered.get(index - 1) : null);
+        post.put("seriesNext", index >= 0 && index < ordered.size() - 1 ? ordered.get(index + 1) : null);
+    }
+
+    // 개발 기록 목록 위의 시리즈 카드: 정의 + 발행된 글 수
+    private List<Map<String, Object>> selectSeriesCards() {
+        Map<String, Integer> counts = new HashMap<>();
+        for (Map<String, Object> row : postDAO.selectSeriesCounts()) {
+            counts.put((String) row.get("series"), ((Number) row.get("postCount")).intValue());
+        }
+        List<Map<String, Object>> cards = new ArrayList<>();
+        for (Map<String, Object> meta : seriesCatalog.list()) {
+            int count = counts.getOrDefault((String) meta.get("slug"), 0);
+            if (count > 0) {
+                Map<String, Object> card = new HashMap<>(meta);
+                card.put("postCount", count);
+                cards.add(card);
+            }
+        }
+        return cards;
     }
 
     @Override
@@ -177,11 +267,17 @@ public class PostServiceImpl implements PostService {
         post.put("body", optional(param.get("body")));
         post.put("hashtags", parseHashtagText(optional(param.get("hashtags"))));
         post.put("sources", parseSourceText(optional(param.get("sources"))));
+        post.put("series", optional(param.get("series")));
+        post.put("chapter", post.get("series") == null ? null : optional(param.get("chapter")));
+        post.put("seriesOrder", post.get("series") == null ? null : seriesOrder(param.get("seriesOrder")));
         if (post.get("slug") == null) {
             post.put("slug", generateSlug((String) post.get("publishedAt")));
         }
 
         String error = validate(post);
+        if (error == null) {
+            error = seriesProblem(post);
+        }
         if (error != null) {
             return Response.invalid(error);
         }
@@ -267,15 +363,10 @@ public class PostServiceImpl implements PostService {
     // 형식이 틀린 파일은 건너뛰고 로그를 남긴다(배포 전 mvn test 가 먼저 막는다).
     @EventListener(ContextRefreshedEvent.class)
     public void importMarkdownPosts() {
-        Set<String> paths = servletContext.getResourcePaths(POSTS_DIR);
-        if (paths == null) {
-            return;
-        }
+        Set<String> paths = new TreeSet<>();
+        collectMarkdown(POSTS_DIR, paths);
         int imported = 0;
-        for (String path : new TreeSet<>(paths)) {
-            if (!path.endsWith(".md")) {
-                continue;
-            }
+        for (String path : paths) {
             Map<String, Object> post;
             try (InputStream in = servletContext.getResourceAsStream(path)) {
                 post = parse(path.substring(POSTS_DIR.length()), new String(in.readAllBytes(), StandardCharsets.UTF_8));
@@ -296,6 +387,21 @@ public class PostServiceImpl implements PostService {
             }
         }
         logger.info("Markdown 글 {}개를 새로 가져왔습니다.", imported);
+    }
+
+    // 폴더 안의 .md 를 하위 폴더까지 모은다 (시리즈 글은 content/posts/series/{시리즈}/{장}/ 에 있다)
+    private void collectMarkdown(String dir, Set<String> out) {
+        Set<String> paths = servletContext.getResourcePaths(dir);
+        if (paths == null) {
+            return;
+        }
+        for (String path : paths) {
+            if (path.endsWith("/")) {
+                collectMarkdown(path, out);
+            } else if (path.endsWith(".md")) {
+                out.add(path);
+            }
+        }
     }
 
     // AI 가 커밋한 표지 이미지가 WAR 에 없거나 이미지가 아니면(예: 바이너리 대신 base64 글자가 저장됨) 표지 없이 가져온다.
@@ -347,8 +453,18 @@ public class PostServiceImpl implements PostService {
         post.put("hashtags", hashtags(meta, fileName));
         post.put("sources", sources(meta, fileName));
         post.put("body", matcher.group(2).strip());
+        post.put("series", frontMatterText(meta, "series", fileName));
+        post.put("chapter", frontMatterText(meta, "chapter", fileName));
+        Object order = meta.get("seriesOrder");
+        if (order != null && !(order instanceof Integer)) {
+            throw invalid(fileName, "seriesOrder 는 따옴표 없는 숫자여야 합니다");
+        }
+        post.put("seriesOrder", order);
 
         String error = validate(post);
+        if (error == null) {
+            error = seriesProblem(post);
+        }
         if (error != null) {
             throw invalid(fileName, error);
         }
@@ -383,6 +499,10 @@ public class PostServiceImpl implements PostService {
         }
         if (post.get("body") == null) {
             return "본문을 입력해 주세요.";
+        }
+        String imageProblem = MarkdownBlocks.imageProblem((String) post.get("body"));
+        if (imageProblem != null) {
+            return imageProblem;
         }
         if (post.get("status") == null || !STATUSES.contains(post.get("status"))) {
             return "상태가 올바르지 않습니다.";
@@ -425,6 +545,39 @@ public class PostServiceImpl implements PostService {
             }
         }
         return null;
+    }
+
+    // 시리즈 칸: 셋 다 비었거나, 시리즈·장이 series.yml 에 있고 순서가 1~999. 틀린 곳의 안내 문구, 맞으면 null
+    String seriesProblem(Map<String, Object> post) {
+        String series = (String) post.get("series");
+        String chapter = (String) post.get("chapter");
+        Object order = post.get("seriesOrder");
+        if (series == null && chapter == null && order == null) {
+            return null;
+        }
+        if (series == null || seriesCatalog.find(series) == null) {
+            return "시리즈를 골라 주세요.";
+        }
+        if (chapter == null || seriesCatalog.chapterIndex(series, chapter) < 0) {
+            return "시리즈의 장을 골라 주세요.";
+        }
+        if (!(order instanceof Integer number) || number < 1 || number > 999) {
+            return "장 안의 순서를 1~999 사이 숫자로 입력해 주세요.";
+        }
+        return null;
+    }
+
+    // 편집 칸의 순서 글자 → 숫자. 비었으면 null, 숫자가 아니면 -1(검증에서 안내)
+    private static Integer seriesOrder(Object value) {
+        String text = optional(value);
+        if (text == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(text);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     // Map.of 로 만든 맵은 containsKey(null) 에서 예외를 던지므로 null 을 먼저 거른다
@@ -566,9 +719,11 @@ public class PostServiceImpl implements PostService {
         commentDAO.insertPromptComment(comment);
     }
 
-    private static List<Map<String, Object>> addCategoryLabels(List<Map<String, Object>> posts) {
+    private List<Map<String, Object>> addCategoryLabels(List<Map<String, Object>> posts) {
         for (Map<String, Object> post : posts) {
             post.put("categoryLabel", CATEGORY_LABELS.get(post.get("category")));
+            Map<String, Object> series = post.get("series") == null ? null : seriesCatalog.find((String) post.get("series"));
+            post.put("seriesTitle", series == null ? null : series.get("title"));
         }
         return posts;
     }
@@ -661,108 +816,7 @@ public class PostServiceImpl implements PostService {
 
     // ───────────────────────── 본문 Markdown → 화면 블록 ─────────────────────────
 
-    // Markdown 본문 → JSP(postDetail.jsp)가 그리는 블록 목록. 원본 HTML·이미지는 버린다
     List<Map<String, Object>> toBlocks(String markdown) {
-        List<Map<String, Object>> blocks = new ArrayList<>();
-        for (Node node = MARKDOWN.parse(markdown).getFirstChild(); node != null; node = node.getNext()) {
-            Map<String, Object> block = toBlock(node);
-            if (block != null) {
-                blocks.add(block);
-            }
-        }
-        return blocks;
-    }
-
-    // 최상위 노드 하나 → 블록. 화면에 내보내지 않는 노드(HtmlBlock, 구분선 등)는 null
-    private static Map<String, Object> toBlock(Node node) {
-        if (node instanceof Heading heading) {
-            String text = plainText(heading);
-            return text.isBlank() ? null : block(heading.getLevel() <= 2 ? "heading2" : "heading3", "text", text);
-        }
-        if (node instanceof Paragraph || node instanceof BlockQuote) {
-            List<Map<String, Object>> segments = segments(node);
-            return segments.isEmpty() ? null : block(node instanceof Paragraph ? "paragraph" : "quote", "segments", segments);
-        }
-        if (node instanceof ListBlock) {
-            List<Map<String, Object>> items = new ArrayList<>();
-            for (Node item = node.getFirstChild(); item != null; item = item.getNext()) {
-                List<Map<String, Object>> segments = segments(item);
-                if (!segments.isEmpty()) {
-                    items.add(Map.of("segments", segments));
-                }
-            }
-            return items.isEmpty() ? null : block("list", "items", items);
-        }
-        if (node instanceof FencedCodeBlock code) {
-            return block("code", "text", code.getLiteral().stripTrailing());
-        }
-        if (node instanceof IndentedCodeBlock code) {
-            return block("code", "text", code.getLiteral().stripTrailing());
-        }
-        return null;
-    }
-
-    private static Map<String, Object> block(String type, String key, Object value) {
-        Map<String, Object> block = new LinkedHashMap<>();
-        block.put("type", type);
-        block.put(key, value);
-        return block;
-    }
-
-    // 노드 안의 글자를 굵게·기울임 구간별로 나눈다: [{text, bold, italic}, ...]
-    private static List<Map<String, Object>> segments(Node node) {
-        List<Map<String, Object>> segments = new ArrayList<>();
-        collect(node, false, false, segments);
-        return segments;
-    }
-
-    private static void collect(Node node, boolean bold, boolean italic, List<Map<String, Object>> out) {
-        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            if (child instanceof Text text) {
-                append(out, text.getLiteral(), bold, italic);
-            } else if (child instanceof Code code) {
-                append(out, code.getLiteral(), bold, italic);
-            } else if (child instanceof SoftLineBreak || child instanceof HardLineBreak) {
-                append(out, " ", bold, italic);
-            } else if (child instanceof StrongEmphasis) {
-                collect(child, true, italic, out);
-            } else if (child instanceof Emphasis) {
-                collect(child, bold, true, out);
-            } else if (child instanceof HtmlInline || child instanceof Image) {
-                // 원본 HTML 과 이미지는 화면에 내보내지 않는다
-            } else {
-                if (child instanceof Block && !out.isEmpty()) {
-                    append(out, " ", false, false); // 인용·목록 안의 문단 사이
-                }
-                collect(child, bold, italic, out); // 링크 등은 안의 글자만
-            }
-        }
-    }
-
-    // 앞 구간과 굵게·기울임이 같으면 이어 붙인다
-    private static void append(List<Map<String, Object>> out, String text, boolean bold, boolean italic) {
-        if (text.isEmpty()) {
-            return;
-        }
-        if (!out.isEmpty()) {
-            Map<String, Object> last = out.get(out.size() - 1);
-            if (last.get("bold").equals(bold) && last.get("italic").equals(italic)) {
-                last.put("text", last.get("text") + text);
-                return;
-            }
-        }
-        Map<String, Object> segment = new HashMap<>();
-        segment.put("text", text);
-        segment.put("bold", bold);
-        segment.put("italic", italic);
-        out.add(segment);
-    }
-
-    private static String plainText(Node node) {
-        StringBuilder text = new StringBuilder();
-        for (Map<String, Object> segment : segments(node)) {
-            text.append(segment.get("text"));
-        }
-        return text.toString().strip();
+        return MarkdownBlocks.toBlocks(markdown);
     }
 }

@@ -226,6 +226,63 @@
 #coverFile:focus-visible + label { outline: 3px solid var(--color-primary); outline-offset: 4px; }
 .editor-danger { border-color: #e7c9bb; }
 
+/* 본문: 코드 글자, 표, 본문 이미지 */
+.article-content :not(pre) > code { padding: 1px 6px; border-radius: 4px; background: var(--color-surface); font-size: .88em; overflow-wrap: anywhere; word-break: break-all; }
+.article-content a code { color: inherit; }
+.table-wrap { margin: 28px 0; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-control); }
+.table-wrap table { width: 100%; min-width: 480px; font-size: 14px; line-height: 1.7; }
+.table-wrap th, .table-wrap td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); }
+.table-wrap th { background: var(--color-surface); font-weight: 700; white-space: nowrap; }
+.table-wrap tr:last-child td { border-bottom: 0; }
+.article-figure { margin: 28px 0; }
+.article-figure img { width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+
+/* 시리즈: 글 안의 목차 상자, 이전/다음 글 */
+.series-box { margin-bottom: 32px; padding: 14px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: var(--color-surface); font-size: 14px; }
+.series-box-label { font-weight: 700; }
+.series-box-label a { color: var(--color-primary); }
+.series-box-label a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.series-box summary { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-text-secondary); cursor: pointer; }
+.series-box ol { display: grid; gap: 6px; padding-left: 22px; padding-bottom: 6px; color: var(--color-text-secondary); }
+.series-box ol a:hover { color: var(--color-primary); }
+.series-box [aria-current="page"] { color: var(--color-text-primary); font-weight: 700; }
+.series-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 48px; }
+.series-pager a { display: grid; gap: 4px; padding: 14px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-control); }
+.series-pager a:hover { border-color: var(--color-primary); }
+.series-pager span { color: var(--color-text-secondary); font-size: 12px; }
+.series-pager strong { font-size: 14px; line-height: 1.6; }
+.series-pager-next { grid-column: 2; text-align: right; }
+
+/* 시리즈: 개발 기록 위의 카드, 시리즈 화면 */
+.series-cards { padding-block: 20px 4px; }
+.series-cards h2 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.series-cards ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.series-cards a { display: grid; gap: 6px; height: 100%; padding: 16px; border: 1px solid var(--color-border); border-radius: 16px; }
+.series-cards a:hover { border-color: var(--color-primary); }
+.series-cards strong { font-size: 16px; letter-spacing: -.3px; }
+.series-cards span { color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.series-cards small { color: var(--color-primary); font-size: 12px; font-weight: 650; }
+.series-page .feed-heading .post-category { margin-bottom: 8px; }
+.series-stack { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.series-stack li { padding: 2px 10px; border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-text-secondary); font-size: 12px; }
+.series-meta { font-size: 13px; }
+.series-meta a { color: var(--color-primary); }
+.series-page .feed-heading .button { margin-top: 18px; }
+.series-chapter { padding-top: 28px; border-top: 1px solid var(--color-border); margin-top: 8px; }
+.series-chapter h2 { font-size: 19px; font-weight: 750; letter-spacing: -.4px; }
+.series-chapter-no { margin-right: 6px; color: var(--color-primary); font-size: 14px; }
+.series-chapter ol { display: grid; gap: 2px; padding-left: 22px; margin-top: 10px; padding-bottom: 20px; }
+.series-chapter li a { display: grid; gap: 2px; padding-block: 8px; }
+.series-chapter li strong { font-size: 15px; font-weight: 650; }
+.series-chapter li a:hover strong { color: var(--color-primary); }
+.series-chapter li span { color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; }
+
+/* 편집 화면: 본문 칸 머리(라벨 + 이미지 버튼), 시리즈 칸 */
+.field-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.field-head .button { min-height: 36px; padding-block: 6px; font-size: 13px; cursor: pointer; }
+#bodyImageFile:focus-visible + label { outline: 3px solid var(--color-primary); outline-offset: 4px; }
+.series-fields { display: grid; grid-template-columns: 1fr 96px; gap: 10px; }
+
 .about-page .feed-heading { border-bottom: 1px solid var(--color-border); }
 .about-page .feed-heading h1 { max-width: 560px; }
 .about-letter { padding-top: 36px; max-width: 660px; font-size: 16px; line-height: 1.95; }
@@ -315,6 +372,8 @@
     .article-end { align-items: flex-start; flex-direction: column; gap: 4px; }
     .comment-fields { grid-template-columns: minmax(0, 1fr); }
     .comment-form .button { justify-self: stretch; }
+    .series-pager { grid-template-columns: minmax(0, 1fr); }
+    .series-pager-next { grid-column: auto; }
     .admin-head { flex-direction: column; align-items: stretch; gap: 16px; }
     .admin-actions .button { flex: 1; }
     .admin-post-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }

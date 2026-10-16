@@ -31,6 +31,16 @@ public class PostDAO {
         return sqlSession.selectOne(SQL_PATH + ".selectPostBySlug", param);
     }
 
+    // 시리즈의 글 (series, includeDraft). 순서는 서비스가 장 순서로 다시 정렬한다
+    public List<Map<String, Object>> selectSeriesPosts(Map<String, Object> param) {
+        return sqlSession.selectList(SQL_PATH + ".selectSeriesPosts", param);
+    }
+
+    // 시리즈별 발행된 글 수 [{series, postCount}]
+    public List<Map<String, Object>> selectSeriesCounts() {
+        return sqlSession.selectList(SQL_PATH + ".selectSeriesCounts");
+    }
+
     // 관리 화면 목록
     public List<Map<String, Object>> selectAdminPostList() {
         return sqlSession.selectList(SQL_PATH + ".selectAdminPostList");

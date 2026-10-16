@@ -63,7 +63,7 @@ front matter 규칙:
 - `hashtags`: 오늘 주제 태그 4~6개(예: IT뉴스, AI뉴스, 반도체, 보안, 회사명. 매번 그날 뉴스에 맞게) 뒤에 `DevGear`, `DevMonster`. `#` 은 붙이지 않습니다.
 - `sources`: 다룬 기사마다 하나씩, 본문에 나온 순서대로. `url` 은 반드시 `https://` 로 시작하는 실제 기사 주소.
 - `coverAlt`: 이미지 설명(대체 텍스트) **초안**. `coverPrompt` 의 네 컷 장면을 한국어로 한 문장씩, 전체 200자 이하로 씁니다. 대사는 작은따옴표로 씁니다.
-  예: `4컷 만화. 1컷 DevMonster가 노트북으로 뉴스를 연다. 2컷 빛나는 칩을 올려다본다. 3컷 방패가 해킹을 막는다. 4컷 '나도 공부해야지'라고 말한다.`
+  예: `4컷 만화. 1컷 DevMonster가 칩 옆의 상승 그래프를 보고 놀란다. 2컷 로봇에게 모델 상자를 받는다. 3컷 광고 뒤에서 뻗어 나오는 수상한 손을 발견한다. 4컷 로봇과 공부하며 노트북 앞에 방패를 세운다.`
   이미지를 올릴 때 이 문장이 설명 칸에 미리 들어가 있고, 사람이 실제 이미지와 맞는지 확인합니다.
 - `coverImage` 는 쓰지 않습니다. 이미지는 사람이 관리 화면에서 넣습니다.
 
@@ -72,13 +72,17 @@ front matter 규칙:
 `coverPrompt` 는 아래 틀을 그대로 쓰고 `{...}` 만 오늘 뉴스에 맞게 채웁니다. 영어로 쓰고, 말풍선 대사만 한국어로 씁니다.
 
 ```text
-A Korean four-panel comic (4-cut webtoon) in a 2x2 grid, landscape 3:2 canvas, thin white gutters between panels, read left to right then top to bottom. Clean webtoon line art, flat soft colors, warm light gray backgrounds, a single orange accent color. The same main character appears in every panel with an identical design: DevMonster, a friendly small cobalt-blue monster with two short rounded horns, simple dark eyes and round charcoal eyeglasses, often with a small silver laptop. Panel 1 (top left): {오늘의 도입 장면}. Panel 2 (top right): {첫 번째 핵심 뉴스를 사물·은유로}. Panel 3 (bottom left): {두 번째 핵심 뉴스 또는 반전}. Panel 4 (bottom right): {DevMonster 의 결론, 가벼운 웃음 포인트}. Speech bubbles with short Korean lines only: panel 1 '{대사}', panel 2 '{대사}', panel 3 '{대사}', panel 4 '{대사}'. No other text, no company logos or brand names, no real people.
+A Korean four-panel comic (4-cut webtoon) in a 2x2 grid, landscape 3:2 canvas, thin white gutters between panels, read left to right then top to bottom. Clean webtoon line art, flat soft colors, warm light gray backgrounds, orange highlights alongside cobalt blue and neutral colors. The same main character appears in every panel with an identical design: DevMonster, a friendly small cobalt-blue monster with two short rounded horns, simple dark eyes and round charcoal eyeglasses, often with a small silver laptop. One clear focal action per panel, large readable props, minimal background details. Panel 1 (top left): {핵심 뉴스의 변화와 DevMonster 의 위치·표정·행동}. Panel 2 (top right): {두 번째 뉴스의 변화와 DevMonster 의 위치·표정·행동}. Panel 3 (bottom left): {세 번째 뉴스 또는 앞선 뉴스의 영향과 DevMonster 의 위치·표정·행동}. Panel 4 (bottom right): {앞선 장면에 대응하는 DevMonster 의 구체적인 행동 또는 가벼운 반전}. Exactly one speech bubble per panel, with readable Korean text and space around faces and key props: panel 1 '{대사}', panel 2 '{대사}', panel 3 '{대사}', panel 4 '{대사}'. No other text, no company logos or brand names, no real people.
 ```
 
-- 5개 뉴스 중 화제성이 가장 큰 2~3개만 2·3컷에 담고 나머지는 뺍니다. 4컷은 신입 웹개발자 DevMonster 의 결론입니다(예: '나도 공부해야지').
+- 5개 뉴스 중 화제성과 시각적 전달력이 높은 2~3개만 고릅니다. 한 컷에는 하나의 뉴스와 하나의 중심 행동만 담고, 서로 다른 사건을 같은 장면에 합치지 않습니다.
+- 1컷부터 핵심 뉴스를 보여 줍니다. 커피를 마시며 뉴스를 여는 일상 장면을 고정 도입으로 쓰지 않습니다. 2컷은 두 번째 뉴스, 3컷은 세 번째 뉴스 또는 앞선 뉴스의 영향으로 구성합니다. 관련 없는 뉴스 사이에 원인과 결과를 만들지 않습니다.
+- 4컷은 앞선 장면에서 이어지는 신입 웹개발자 DevMonster 의 구체적인 행동이나 가벼운 반전으로 마무리합니다. '나도 공부해야지' 같은 결론을 반복하지 않고, 대사와 실제 행동을 맞춥니다.
 - 회사·제품·인물은 그리지 않고 사물로 바꿉니다: AI 는 작고 친근한 로봇, 반도체는 빛나는 칩, 보안은 자물쇠·방패, 클라우드는 구름 모양 서버, 기기는 상표 없는 휴대폰·노트북.
-- 대사는 컷마다 하나, 한국어 8자 이하, **작은따옴표**로 감쌉니다(front matter 값 안에는 큰따옴표를 쓸 수 없습니다).
-- 장면 설명은 영어로 한두 문장씩, 전체 2000자 이하로 씁니다.
+- 은유는 기사에 확인된 변화와 위험을 전달해야 합니다. 서로 다른 뉴스가 같은 기술·제품에서 일어난 것처럼 그리거나, 근거 없이 특정 조치가 위험을 완전히 해결한 것처럼 그리지 않습니다.
+- 대사는 컷마다 하나, **공백과 문장부호를 포함해 한국어 16자 이하**로 쓰고 **작은따옴표**로 감쌉니다(front matter 값 안에는 큰따옴표를 쓸 수 없습니다). '대박!' 같은 감탄만 쓰지 말고 무엇이 달라졌는지 전달합니다.
+- 장면 설명은 영어로 한두 문장씩 씁니다. 컷마다 DevMonster 의 위치·표정·행동과 중심 사물을 명시하고, 작은 소품·복잡한 화면·동시에 벌어지는 여러 행동은 줄입니다. 말풍선이 얼굴과 중심 사물을 가리지 않도록 여백을 둡니다.
+- 주황색은 강조에 사용하고, 캐릭터의 코발트블루와 노트북의 은색은 유지합니다. 고정 문구·네 컷 설명·대사를 포함한 `coverPrompt` 전체는 2000자 이하로 씁니다.
 
 ### 3. 본문 구성
 
@@ -118,9 +122,11 @@ A Korean four-panel comic (4-cut webtoon) in a 2x2 grid, landscape 3:2 canvas, t
 
 ### 4. 쓰면 안 되는 것
 
-이 블로그는 아래 문법을 화면에 보여 주지 않거나 깨뜨립니다.
+뉴스 글 형식을 일정하게 유지하기 위해 아래는 쓰지 않습니다.
 
-- HTML 태그, 이미지(`![]()`), 표(`|`), 구분선(`---`), 본문 속 링크(`[글자](주소)`). 기사 주소는 `sources` 에만 씁니다.
+- HTML 태그와 구분선(`---`): 화면에 나오지 않습니다.
+- 본문 속 이미지(`![]()`): 블로그에 올린 이미지만 보이므로, 대표 이미지 외에는 넣지 않습니다.
+- 표(`|`)와 본문 속 링크(`[글자](주소)`): 블로그는 보여 주지만 뉴스 글 형식에는 쓰지 않습니다. 기사 주소는 `sources` 에만 씁니다.
 - 소제목·본문의 이모지.
 - 이웃 관리용 태그(#서로이웃 등), 좋아요·공유 요청.
 - **굵게 규칙:** 닫는 `**` 바로 앞에 괄호·따옴표 같은 문장부호를 두고 바로 뒤에 한글을 붙이면 굵게가 적용되지 않고 별표가 그대로 보입니다.
@@ -143,7 +149,9 @@ A Korean four-panel comic (4-cut webtoon) in a 2x2 grid, landscape 3:2 canvas, t
 - 뉴스 5개 모두 `## 번호. 카테고리: "헤드라인"` / **핵심 뉴스:** / 본문 2문단 / `> **Dev Monster의 시선:**` 이 있는가
 - 굵게 규칙을 어긴 곳(`**...)**한글`, `**...'**한글` 같은 형태)이 없는가
 - 이모지, 이미지, 표, 링크, HTML, 구분선, "출처:" 줄이 본문에 없는가
-- `coverPrompt` 가 "2-1" 의 4컷 틀을 따르고, 대사가 작은따옴표의 8자 이하 한국어이며, 로고·실존 인물을 요구하지 않는가
+- `coverPrompt` 가 "2-1" 의 4컷 틀을 따르고 전체 2000자 이하이며, 대사가 컷마다 하나씩 작은따옴표로 감싼 한국어이고 각각 공백·문장부호 포함 16자 이하인가
+- 1컷부터 핵심 뉴스를 보여 주고, 한 컷에 서로 다른 사건을 합치지 않으며, 4컷의 행동과 대사가 앞선 장면에 이어지는가
+- 네 컷 모두 DevMonster 의 위치·표정·행동이 명확하고, 기사에 없는 인과관계·해결 효과나 로고·실존 인물을 요구하지 않는가
 - `coverAlt` 가 `coverPrompt` 의 네 컷과 같은 장면을 200자 이하로 설명하는가
 - 문장이 자연스럽고, 괄호 속 메모나 `{...}` 같은 자리표시가 남아 있지 않은가
 

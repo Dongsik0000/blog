@@ -12,6 +12,16 @@
         <section class="feed" aria-labelledby="archive-title">
             <header class="feed-heading"><h1 id="archive-title"><c:out value="${categoryTitle}"/><span>.</span></h1><p><c:out value="${categoryDescription}"/></p></header>
             <t:categoryNav selected="${selectedCategory}"/>
+            <c:if test="${not empty seriesCards}">
+                <section class="series-cards" aria-labelledby="series-cards-title">
+                    <h2 id="series-cards-title">시리즈로 읽기</h2>
+                    <ul>
+                        <c:forEach var="s" items="${seriesCards}"><c:url var="cardUrl" value="/series/${s.slug}"/>
+                        <li><a href="<c:out value='${cardUrl}'/>"><strong><c:out value="${s.title}"/></strong><span><c:out value="${s.summary}"/></span><small>글 <c:out value="${s.postCount}"/>개 · <c:out value="${fn:length(s.chapters)}"/>개 장</small></a></li>
+                        </c:forEach>
+                    </ul>
+                </section>
+            </c:if>
             <div class="feed-caption"><span>글 모음</span><span>최신 글부터</span></div>
             <t:postList items="${posts}" category="${selectedCategory}"/>
             <c:if test="${totalPages > 1}">

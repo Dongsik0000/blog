@@ -2,6 +2,7 @@
 <%@ attribute name="blocks" required="false" type="java.lang.Object"%>
 <%@ attribute name="categories" required="false" type="java.lang.Boolean"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions"%>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags"%>
 <aside class="blog-sidebar" aria-label="작성자와 글 탐색">
     <section class="author-profile" aria-labelledby="profile-name">
@@ -12,6 +13,14 @@
         <a class="profile-link" href="<c:url value='/about'/>">DevGear 소개 <span aria-hidden="true">→</span></a>
     </section>
     <t:articleToc blocks="${blocks}"/>
+    <c:if test="${not empty requestScope.seriesMenu}">
+    <nav class="sidebar-section sidebar-categories sidebar-series" aria-label="개발 기록 시리즈">
+        <h2>시리즈</h2>
+        <c:forEach var="s" items="${requestScope.seriesMenu}"><c:url var="seriesMenuUrl" value="/series/${s.slug}"/>
+        <a href="<c:out value='${seriesMenuUrl}'/>"><span><c:out value="${s.title}"/><small><c:out value="${fn:length(s.chapters)}"/>개 장</small></span><span aria-hidden="true">→</span></a>
+        </c:forEach>
+    </nav>
+    </c:if>
     <c:if test="${empty categories or categories}">
     <nav class="sidebar-section sidebar-categories" aria-label="주제별 글 모음">
         <h2>카테고리</h2>
