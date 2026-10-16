@@ -20,6 +20,7 @@ git push origin main
       ├─ git pull --ff-only
       ├─ mvn -q package   (테스트 + war)
       ├─ docker compose up -d --build
+      ├─ 로그인 화면이 응답할 때까지 확인 (최대 2분)
       └─ 오래된 이미지, 빌드 캐시 정리
 ```
 
@@ -93,6 +94,16 @@ main() {
     # Dockerfile 이 target/fashion-archive.war 를 복사하므로 이미지 빌드 전에 war 를 만든다
     mvn -q package
     docker compose up -d --build
+
+    # 앱이 실제로 응답할 때까지 기다린다(최대 2분). 응답이 없으면 실패로 끝내 Actions 에 표시되게 하고,
+    # 이전 이미지를 지우는 정리 단계도 건너뛴다
+    for _ in $(seq 1 24); do
+        curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8080/p1/login && break
+        sleep 5
+    done
+    curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8080/p1/login \
+        || { echo "배포 후 앱이 응답하지 않습니다: docker compose logs 로 확인하세요" >&2; return 1; }
+
     # 빌드할수록 쌓이는 이름 없는 이미지와 7일 지난 빌드 캐시를 지운다. 실패해도 배포는 끝났으므로 알리기만 한다
     docker image prune -f > /dev/null || echo "이미지 정리 실패 (배포는 완료)" >&2
     docker builder prune -f --filter until=168h > /dev/null || echo "빌드 캐시 정리 실패 (배포는 완료)" >&2
@@ -109,7 +120,8 @@ exit
 | `flock -w 900 9` | 같은 서버의 다른 앱 배포와 겹치지 않게 같은 잠금 파일로 차례를 기다림(최대 15분) |
 | `git pull --ff-only` | 서버 코드가 GitHub보다 뒤처져 있을 때만 받음. 이력이 갈라져 있으면 실패 |
 | `mvn -q package` | 테스트를 실행하고 war를 만듦. `-q`는 오류만 출력 |
-| `docker compose up -d --build` | 새 war로 이미지를 만들고 컨테이너를 교체 |
+| `docker compose up -d --build` | 새 war로 이미지를 만들고 컨테이너를 교체. 켜라고 지시만 하고 바로 끝남 |
+| `for ... curl` 반복 | 5초 간격으로 최대 2분 동안 로그인 화면(`/p1/login`)을 요청. 2분 안에 응답이 없으면 실패로 끝내고 정리 단계를 건너뜀 |
 | `prune` 두 줄 | 정리는 실패해도 배포를 실패로 만들지 않음 (`\|\| echo`) |
 | `main` 함수로 감싸기 | 주석대로, 실행 중 `git pull`이 이 파일을 바꿔도 이미 읽은 함수를 끝까지 실행 |
 
@@ -123,7 +135,7 @@ exit
 
 ## 확인
 
-GitHub 저장소의 **Actions** 탭에서 `deploy` 실행을 열고, 마지막 줄의 `배포 완료: <커밋>`을 확인합니다. 서버에서는 다음으로 확인합니다.
+GitHub 저장소의 **Actions** 탭에서 `deploy` 실행을 열고, 마지막 줄의 `배포 완료: <커밋>`을 확인합니다. 이 줄은 로그인 화면이 응답한 뒤에 출력됩니다. `배포 후 앱이 응답하지 않습니다`가 보이면 서버에서 `docker compose logs`로 시작 오류를 찾습니다. 서버에서는 다음으로 확인합니다.
 
 ```bash
 cd /srv/devgear/fashion-archive
@@ -134,5 +146,5 @@ git log --oneline -1
 ## 정리
 
 - main에 push하면 GitHub Actions가 SSH로 서버의 `deploy/deploy.sh`를 실행합니다.
-- 스크립트는 다른 앱 배포를 기다린 뒤 `git pull --ff-only` → `mvn -q package` → `docker compose up -d --build` → 정리 순서로 진행합니다.
+- 스크립트는 다른 앱 배포를 기다린 뒤 `git pull --ff-only` → `mvn -q package` → `docker compose up -d --build` → 응답 확인 → 정리 순서로 진행합니다.
 - `mvn package`가 테스트를 포함하므로, 테스트가 실패하면 이미지를 만들지 않고 이전 버전이 계속 실행됩니다.
