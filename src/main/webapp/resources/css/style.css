@@ -235,7 +235,7 @@
 .table-wrap th { background: var(--color-surface); font-weight: 700; white-space: nowrap; }
 .table-wrap tr:last-child td { border-bottom: 0; }
 .article-figure { margin: 28px 0; }
-.article-figure img { width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+.article-figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
 
 /* 시리즈: 글 안의 목차 상자, 이전/다음 글 */
 .series-box { margin-bottom: 32px; padding: 14px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: var(--color-surface); font-size: 14px; }

@@ -69,6 +69,8 @@ CSV는 쉼표로 칸을 나누므로, 값 안에 쉼표가 있으면 칸이 밀�
 
 이 변환은 `CsvUtilTest`로 검사합니다.
 
+![설정 화면의 기록 내보내기. 이번 주기, 이번 달, 지난달, 올해 버튼과 시작일, 종료일, CSV 내보내기 버튼이 있다](/uploads/capture-ledger-13-csv-settings.jpg)
+
 ## 내보내기 Controller
 
 `SettingsApiController.export` (일부)

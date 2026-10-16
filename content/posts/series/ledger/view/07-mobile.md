@@ -30,20 +30,32 @@ seriesOrder: 7
 |---|---|
 | 1150px 이하 | 여백과 칸 너비 조정 |
 | 900px 이하 | 두 칸 배치를 한 칸으로 (대시보드, 차트, 설정 카드) |
-| 768px 이하 | 왼쪽 세로 메뉴를 **위쪽 가로 메뉴**로, 넘치면 옆으로 밀기 |
+| 768px 이하 | 왼쪽 세로 메뉴를 **화면 아래에 고정한 메뉴**(7칸)로 |
 | 480px, 380px 이하 | 버튼을 한 줄 전체로, 글자와 간격 축소 |
 
 ```css
 @media (max-width: 768px) {
   .app-shell { display: block; }
   .app-sidebar { position: static; width: auto; height: auto; ... }
-  .app-nav { flex-direction: row; gap: 5px; overflow-x: auto; ... }
+}
+
+@media (max-width: 768px) {
+  .app-nav { position: fixed; inset: auto 0 0; display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); ... }
+  .page-content { padding-bottom: calc(102px + ...); }
 }
 ```
 
-휴대폰에서는 화면 왼쪽을 메뉴가 차지하면 본문이 좁아지므로, 메뉴를 위로 올리고 가로로 밀어 볼 수 있게 했습니다.
+`style.css`에는 768px 미디어 쿼리가 여러 번 나옵니다. 앞쪽 블록이 사이드바를 본문 위로 옮기고, 뒤쪽 블록이 메뉴(`.app-nav`)를 **화면 아래에 고정**합니다. 같은 선택자는 뒤에 적힌 규칙이 이기므로 최종 화면에서는 아래 메뉴가 됩니다.
 
-<!-- 📷 스크린샷: 휴대폰에서 본 대시보드 (위쪽 가로 메뉴) -->
+| 줄 | 하는 일 |
+|---|---|
+| `position: fixed; inset: auto 0 0;` | 메뉴를 화면 맨 아래 왼쪽부터 오른쪽 끝까지 붙여 둠. 스크롤해도 그 자리에 있음 |
+| `grid-template-columns: repeat(7, ...)` | 메뉴 7개를 같은 너비의 칸으로 나눔 |
+| `.page-content`의 `padding-bottom` | 고정 메뉴가 본문 마지막 부분을 가리지 않게 아래 여백을 줌 |
+
+휴대폰에서는 화면 왼쪽을 메뉴가 차지하면 본문이 좁아집니다. 메뉴를 아래에 고정하면 본문은 화면 폭을 다 쓰고, 스크롤해도 메뉴가 늘 보입니다.
+
+![휴대폰 폭에서 본 대시보드. 카드가 세로로 쌓이고 메뉴 7개가 화면 아래에 고정되어 있다](/uploads/capture-ledger-14-mobile-dashboard.jpg)
 
 큰 화면에서만 켜는 기능도 있습니다.
 
