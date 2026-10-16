@@ -58,7 +58,15 @@ certbot 공식 안내의 명령입니다. 실제 인증서는 바꾸지 않고 �
 sudo certbot renew --dry-run
 ```
 
-마지막에 성공 메시지가 나오면 자동 갱신도 동작합니다. 실패한다면 대부분 **80번 포트가 막혔거나** DNS가 바뀐 경우입니다.
+마지막에 성공 메시지가 나오면 **지금 갱신하는 데 필요한 조건**(80번 포트, DNS, nginx 설정)이 갖춰져 있다는 뜻입니다. 실패한다면 대부분 **80번 포트가 막혔거나** DNS가 바뀐 경우입니다.
+
+dry-run은 지금 한 번 시험한 결과일 뿐입니다. timer가 실제로 돌고 있는지, 지난 갱신 시도가 성공했는지는 따로 확인합니다.
+
+```bash
+systemctl list-timers certbot.timer --no-pager           # 마지막 실행, 다음 실행 시각
+sudo journalctl -u certbot.service -n 20 --no-pager      # 지난 실행의 결과
+sudo certbot certificates                                # 남은 유효 기간
+```
 
 ## 2. HTTP를 HTTPS로 보내기
 
@@ -95,6 +103,13 @@ server {
 
 - `server_name www.example.com example.com;`: 두 도메인으로 들어온 HTTP 요청
 - `return 301 https://$host$request_uri;`: 같은 도메인의 HTTPS로 이동. `$host`는 요청한 도메인 이름 그대로입니다.
+
+첫 번째 블록은 `default_server`라서, [nginx 설치](/posts/oracle-cloud-domain-https-install-nginx) 때부터 켜져 있던 기본 사이트(`default`, 이것도 `default_server`)와 겹칩니다. 둘 다 켜져 있으면 `nginx -t`에서 "duplicate default server" 오류가 나므로, 이 설정을 적용하기 전에 기본 사이트 링크를 끕니다.
+
+```bash
+sudo rm /etc/nginx/sites-enabled/default   # 링크만 지움. 원본은 sites-available 에 남음
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ### 확인하기
 

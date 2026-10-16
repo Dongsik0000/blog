@@ -39,17 +39,34 @@ sudo reboot              # 필요할 때만
 
 ## 2. 자동 보안 업데이트 확인
 
-Ubuntu에는 보안 업데이트를 매일 자동으로 설치하는 **unattended-upgrades**가 들어 있습니다. 켜져 있는지 확인합니다.
+Ubuntu에는 보안 업데이트를 매일 자동으로 설치하는 **unattended-upgrades**가 들어 있습니다. 실제로 돌고 있는지는 세 가지로 나눠 확인합니다.
 
 ```bash
-systemctl is-enabled unattended-upgrades
+cat /etc/apt/apt.conf.d/20auto-upgrades
 ```
 
 ```text
-enabled
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
 ```
 
-`enabled`가 나오면 켜져 있는 것입니다. 보안 패치는 자동으로 설치되지만, **자동 재부팅은 꺼져 있습니다**(기본값). 서비스가 예고 없이 멈추지 않게 하려는 것입니다. 그래서 커널 업데이트 뒤에는 위의 `reboot-required` 확인을 가끔 직접 해 줍니다.
+두 값이 `"1"`이면 매일 패키지 목록을 받고 보안 업데이트를 설치하도록 **설정**되어 있다는 뜻입니다. `"0"`이면 꺼져 있습니다.
+
+```bash
+systemctl list-timers apt-daily.timer apt-daily-upgrade.timer --no-pager
+```
+
+이 두 timer가 실제로 매일 실행을 **예약**합니다. `NEXT`(다음 실행)와 `LAST`(마지막 실행)에 시각이 보이면 정상입니다.
+
+```bash
+sudo ls -lt /var/log/unattended-upgrades/
+```
+
+실제로 **설치한 기록**은 이 폴더의 로그에 남습니다. 최근 날짜의 파일이 있으면 돌고 있는 것입니다.
+
+`systemctl is-enabled unattended-upgrades`가 `enabled`라는 것만으로는 부족합니다. 이 서비스는 업데이트 도중에 서버가 꺼질 때를 처리하는 역할이라, 매일 업데이트가 실행되는지는 보여 주지 않습니다.
+
+보안 패치는 자동으로 설치되지만, **자동 재부팅은 꺼져 있습니다**(기본값). 서비스가 예고 없이 멈추지 않게 하려는 것입니다. 그래서 커널 업데이트 뒤에는 위의 `reboot-required` 확인을 가끔 직접 해 줍니다.
 
 ## 3. 시간대를 한국 시간으로
 
@@ -114,7 +131,8 @@ NAME      TYPE SIZE USED PRIO
 
 | 명령 | 기대 결과 |
 |---|---|
-| `systemctl is-enabled unattended-upgrades` | `enabled` |
+| `cat /etc/apt/apt.conf.d/20auto-upgrades` | 두 값 모두 `"1"` |
+| `systemctl list-timers apt-daily-upgrade.timer --no-pager` | `NEXT`, `LAST`에 시각이 보임 |
 | `timedatectl \| grep 'Time zone'` | `Asia/Seoul` |
 | `swapon --show` | `/swapfile` 한 줄 |
 | `[ -f /var/run/reboot-required ] && echo 필요` | 출력 없음 (재부팅 불필요) |

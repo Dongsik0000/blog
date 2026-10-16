@@ -105,22 +105,26 @@ ssh myserver
 접속한 뒤 서버의 SSH 설정을 확인해 봅니다.
 
 ```bash
-sudo sshd -T | grep -E '^(passwordauthentication|pubkeyauthentication|permitrootlogin) '
+sudo sshd -T | grep -E '^(passwordauthentication|kbdinteractiveauthentication|pubkeyauthentication|permitrootlogin) '
 ```
 
-다음과 같이 나오면 키로만 접속할 수 있는 안전한 상태입니다.
+다음과 같이 나오면 비밀번호로 접속하는 길이 모두 꺼져 있어, 키로만 접속할 수 있는 상태입니다.
 
 ```text
 permitrootlogin without-password
 pubkeyauthentication yes
 passwordauthentication no
+kbdinteractiveauthentication no
 ```
 
 | 설정 | 값 | 의미 |
 |---|---|---|
 | `passwordauthentication` | `no` | 비밀번호로는 접속할 수 없습니다. 비밀번호 무작위 대입 공격을 원천 차단합니다 |
-| `pubkeyauthentication` | `yes` | 키로만 접속합니다 |
+| `kbdinteractiveauthentication` | `no` | 서버가 질문을 보내고 답을 받는 방식(비밀번호를 이 방식으로 물을 수도 있음)도 꺼져 있습니다 |
+| `pubkeyauthentication` | `yes` | 키 접속을 **허용**합니다. 다른 방식을 막는다는 뜻은 아니므로, "키로만"인지는 위의 두 `no`로 판단합니다 |
 | `permitrootlogin` | `without-password` | root는 비밀번호로 접속할 수 없습니다 |
+
+`sshd -T`는 서버 전체의 기본값을 보여 줍니다. 설정 파일에 `Match`로 시작하는 줄이 있으면 특정 사용자나 주소에만 다른 값이 적용될 수 있으므로, `sudo grep -rn '^Match' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/`로 함께 확인합니다. 아무것도 나오지 않으면 위 값이 모든 접속에 적용됩니다.
 
 `passwordauthentication yes`가 나온다면 비밀번호 접속이 열려 있는 것입니다. 키 접속이 잘 되는 것을 먼저 확인한 뒤 `/etc/ssh/sshd_config.d/` 아래 설정 파일에서 `PasswordAuthentication no`로 바꾸고 `sudo systemctl reload ssh`로 적용합니다. 이때 **지금 연결된 SSH 창은 닫지 말고** 새 창으로 다시 접속되는지 확인합니다. 설정이 잘못되어도 기존 창으로 되돌릴 수 있습니다.
 

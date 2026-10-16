@@ -19,6 +19,8 @@ Maven으로 빌드하는 Java 웹 앱(war)을 Tomcat 컨테이너로 실행하�
 
 예시 앱의 이름은 `myapp`이고, 빌드하면 `target/myapp.war`가 생기며, `/shop` 경로로 서비스합니다([리버스 프록시 글](/posts/oracle-cloud-nginx-reverse-proxy)과 같은 구성).
 
+예시는 **Tomcat 10.1** 이미지를 씁니다. Tomcat 10부터는 서블릿 API의 패키지 이름이 `javax.*`에서 `jakarta.*`로 바뀌었기 때문에, 앱도 `jakarta.*`를 쓰는 버전이어야 합니다. Spring이라면 **Spring 6 이상**(Spring Boot라면 3 이상)입니다. Spring 5 이하처럼 `javax.*`를 쓰는 앱은 Tomcat 9 이미지(`tomcat:9.0-jdk17-temurin`)를 쓰거나 앱을 먼저 올려야 합니다. Java 17로 빌드했다는 것만으로는 판단할 수 없습니다.
+
 ## 주요 명령
 
 | 명령 | 뜻 |
@@ -85,6 +87,7 @@ RUN mvn clean package              ← 빌드만 다시
 
 - 30초마다 앱 안의 정적 파일(`css/style.css`, 앱에 실제로 있는 파일로 바꿉니다)을 요청해 정상인지 검사합니다. 3번 연속 실패하면 `unhealthy`가 됩니다.
 - `--start-period=90s`: Tomcat이 뜨는 동안(90초)은 실패해도 셈하지 않습니다.
+- 정적 파일 응답은 **Tomcat과 앱이 떠 있다**는 것까지만 보여 줍니다. 앱이 데이터베이스에 연결되었는지는 알 수 없으므로, 배포가 끝났는지 판단할 때는 [배포 스크립트](/posts/oracle-cloud-deploy-deploy-script)처럼 실제 페이지를 따로 요청해 확인합니다.
 - 검사 주소는 가볍게 응답하는 곳으로 고릅니다. 로그인 화면처럼 요청마다 세션을 만드는 주소를 30초마다 부르면 세션이 계속 쌓입니다. 예시처럼 앱에 포함된 정적 파일이나, 상태 확인용으로 만든 가벼운 주소가 좋습니다.
 
 ```bash

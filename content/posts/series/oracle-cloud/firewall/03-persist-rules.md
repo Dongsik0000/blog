@@ -66,13 +66,41 @@ COMMIT
 
 ## 따라 하기: 바꾼 규칙 저장하기
 
-### 1단계. 지금 규칙이 의도한 대로인지 확인
+저장은 "현재 상태를 그대로 굳히는" 일입니다. 실수로 SSH(22) 규칙을 지운 상태에서 저장하고 재부팅하면, **서버에 다시는 접속할 수 없게 될 수 있습니다.** 그래서 백업 → 확인 → 저장 → 저장 결과 확인 순서로 합니다.
+
+### 1단계. 지금 파일 백업
+
+```bash
+sudo cp /etc/iptables/rules.v4 ~/rules.v4.bak-$(date +%F)
+```
+
+저장하면 이 파일이 덮어써집니다. 잘못 저장했을 때 이 복사본으로 되돌립니다.
+
+### 2단계. 저장해도 되는 상태인지 확인
 
 ```bash
 sudo iptables -S INPUT
 ```
 
-### 2단계. 저장
+출력을 보며 다음을 확인합니다.
+
+| 확인 | 명령 | 기대 결과 |
+|---|---|---|
+| SSH 허용 규칙이 있는가 | `sudo iptables -S INPUT \| grep 'dport 22'` | 한 줄 이상 |
+| 거부 규칙이 맨 끝인가 | `sudo iptables -S INPUT \| tail -1` | `-j REJECT ...` |
+| Oracle 규칙 수가 그대로인가 | 아래 두 명령의 숫자 비교 | 두 숫자가 같음 |
+| Oracle 규칙으로 가는 연결이 있는가 | `sudo iptables -S OUTPUT \| grep -- '-j InstanceServices'` | 한 줄 이상 |
+
+```bash
+sudo iptables -S InstanceServices | grep -c '^-A'                 # 지금 메모리의 Oracle 규칙 수
+sudo grep -c '^-A InstanceServices' /etc/iptables/rules.v4        # 저장된 파일의 Oracle 규칙 수
+```
+
+`InstanceServices`는 Oracle이 넣어 둔 체인으로, 서버가 Oracle 내부 서비스(메타데이터, 시간 동기화, 부트 볼륨 연결 등)와 통신하게 해 줍니다. 이 규칙이 사라진 채 저장되면 재부팅 뒤 서버가 제대로 동작하지 않을 수 있습니다.
+
+`sudo iptables -S InstanceServices | wc -l`처럼 줄 수만 세면 안 됩니다. 체인이 비어 있어도 `-N InstanceServices`(체인 선언) 한 줄이 나오기 때문입니다. 그래서 실제 규칙(`-A`로 시작하는 줄)만 세고, 저장된 파일과 비교합니다. 앞 글에서 INPUT에 규칙만 더했다면 두 숫자는 같아야 합니다.
+
+### 3단계. 저장
 
 ```bash
 sudo netfilter-persistent save
@@ -80,30 +108,17 @@ sudo netfilter-persistent save
 
 지금 메모리의 규칙이 `/etc/iptables/rules.v4`와 `rules.v6`에 기록됩니다.
 
-### 3단계. 저장된 내용 확인
+### 4단계. 저장된 내용 확인
 
 ```bash
-sudo grep -n 'INPUT' /etc/iptables/rules.v4
+sudo diff ~/rules.v4.bak-$(date +%F) /etc/iptables/rules.v4
 ```
 
-## 저장 전에 꼭 확인할 것
-
-저장은 "현재 상태를 그대로 굳히는" 일입니다. 실수로 SSH(22) 규칙을 지운 상태에서 저장하고 재부팅하면, **서버에 다시는 접속할 수 없게 될 수 있습니다.** 그래서 저장 전에 반드시 확인합니다.
-
-| 확인 | 명령 | 기대 결과 |
-|---|---|---|
-| SSH 허용 규칙이 있는가 | `sudo iptables -S INPUT \| grep 'dport 22'` | 한 줄 이상 |
-| 거부 규칙이 맨 끝인가 | `sudo iptables -S INPUT \| tail -1` | `-j REJECT ...` |
-| Oracle 규칙이 남아 있는가 | `sudo iptables -S InstanceServices \| wc -l` | 0보다 큼 |
-
-혹시 모를 경우를 대비해 저장 전에 지금 파일을 복사해 둡니다.
-
-```bash
-sudo cp /etc/iptables/rules.v4 ~/rules.v4.bak-$(date +%F)
-```
+백업과 비교해 **바꾸려던 줄만** 달라졌는지 봅니다. 예를 들어 80, 443을 열었다면 `> -A INPUT ... --dport 80 -j ACCEPT` 같은 줄이 추가로 보이고, 그 밖의 줄은 그대로여야 합니다. 패킷 수를 세는 `[0:0]` 같은 숫자는 달라도 괜찮습니다.
 
 ## 정리
 
 - `iptables` 명령은 재부팅하면 사라지고, `/etc/iptables/rules.v4`의 내용이 다시 적용됩니다.
 - 바꾼 규칙은 `sudo netfilter-persistent save`로 저장합니다.
-- 저장 전에 SSH 규칙과 마지막 거부 규칙, Oracle 규칙이 그대로인지 확인하고, 파일을 백업합니다.
+- 저장 전에 파일을 백업하고, SSH 규칙과 마지막 거부 규칙, Oracle 규칙 수가 그대로인지 확인합니다.
+- 저장한 뒤에는 백업과 비교해 바꾸려던 줄만 달라졌는지 봅니다.
