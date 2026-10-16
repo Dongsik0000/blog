@@ -21,6 +21,8 @@ seriesOrder: 2
 
 검색창에 `Instances`를 입력해 이동하고 **Create instance**를 누릅니다.
 
+만들기 화면은 **Basic information → Security → Networking → Storage → Review** 다섯 단계로 나뉩니다. 아래 1~3은 Basic information, 4는 Security, 5~6은 Networking, 7은 Storage, 8은 Review 단계에서 정합니다. Oracle 공식 문서도 콘솔의 표시 순서는 바뀔 수 있다고 안내하므로, 순서가 다르면 같은 이름의 항목을 찾아 채웁니다.
+
 <!-- 📷 스크린샷: 인스턴스 만들기 첫 화면 -->
 
 ### 1. 이름과 구획
@@ -41,13 +43,17 @@ seriesOrder: 2
 
 <!-- 📷 스크린샷: 이미지와 Shape 선택 화면 -->
 
-### 4. 네트워크
+### 4. 보안 (Security)
+
+**Shielded instance**(부팅 단계 변조 방지)와 **Confidential computing**(메모리 암호화) 같은 선택 기능이 있는 단계입니다. 이 시리즈의 서버는 **기본값 그대로** 넘어갑니다. 두 기능은 지원하는 Shape와 이미지에서만 켤 수 있어서, 화면에 따라 선택지가 비활성화되어 있을 수 있습니다.
+
+### 5. 네트워크
 
 - **Virtual cloud network**: 앞에서 만든 VCN
 - **Subnet**: **공용 서브넷(Public Subnet)**
 - **Assign a public IPv4 address**: **Yes**. 인터넷에서 접속하려면 공인 IP가 필요합니다.
 
-### 5. SSH 키 (가장 중요)
+### 6. SSH 키 (가장 중요)
 
 서버에 원격으로 접속할 때 비밀번호 대신 **SSH 키**를 씁니다. 공식 튜토리얼은 세 가지 방법을 안내합니다.
 
@@ -65,11 +71,24 @@ seriesOrder: 2
 
 <!-- 📷 스크린샷: SSH 키 추가 화면 -->
 
-### 6. 부트 볼륨
+### 7. 부트 볼륨
 
 운영체제가 설치될 디스크입니다. 크기를 바꾸지 않으면 화면에 표시된 기본 크기로 만들어집니다. 무료 범위는 블록 볼륨과 합쳐 200GB이므로, Docker 이미지나 백업 파일을 많이 둘 계획이라면 이 안에서 늘려 둡니다.
 
-### 7. 만들기
+### 8. 검토 (Review)
+
+만들기 전에 마지막으로 다음을 확인합니다. 잘못 만들면 지우고 다시 만들어야 하는 항목들입니다.
+
+| 확인 | 기대 값 |
+|---|---|
+| Shape | `VM.Standard.A1.Flex` |
+| OCPU, 메모리 | 이미 있는 A1 인스턴스와 합쳐 2 OCPU, 12GB 이하 |
+| Image | Ubuntu 24.04 |
+| Subnet | 공용 서브넷, 공인 IPv4 주소 할당 |
+| SSH 키 | 개인 키를 내 PC에 저장했음 |
+| 부트 볼륨 | 다른 볼륨과 합쳐 200GB 이하 |
+
+### 9. 만들기
 
 **Create**를 누르면 상태가 `PROVISIONING`(준비 중)에서 `RUNNING`(실행 중)으로 바뀝니다. 몇 분 정도 걸립니다.
 

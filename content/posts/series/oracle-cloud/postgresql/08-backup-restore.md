@@ -91,7 +91,8 @@ sudo ls -la /var/backups/myapp | tail -3                 # 최근 백업 파일
 sudo -u postgres createdb myapp_restore_test
 
 # 2. 백업 파일 복원
-sudo cat /var/backups/myapp/myapp-2026-10-07-041000.dump | sudo -u postgres pg_restore -d myapp_restore_test
+sudo cat /var/backups/myapp/myapp-2026-10-07-041000.dump | sudo -u postgres pg_restore --exit-on-error -d myapp_restore_test
+echo $?   # 0이면 성공
 
 # 3. 데이터 확인 (테이블 이름은 앱에 맞게)
 sudo -u postgres psql -d myapp_restore_test -Atc "select count(*) from app_user"
@@ -101,6 +102,18 @@ sudo -u postgres dropdb myapp_restore_test
 ```
 
 2번에서 파일을 `sudo cat`으로 넘기는 이유는, 백업 파일은 root만 읽을 수 있고(`umask 077`) `pg_restore`는 `postgres` 사용자로 실행되기 때문입니다.
+
+`--exit-on-error`를 꼭 붙입니다. `pg_restore`는 기본적으로 **오류가 나도 다음 항목을 계속 복원**하고, 끝에 오류 개수만 알려 줍니다. 출력이 길면 오류를 놓치고 반만 복원된 데이터베이스를 정상으로 착각할 수 있습니다. 이 옵션을 붙이면 첫 오류에서 멈추고 종료 코드가 0이 아니게 되므로, `echo $?`로 성공 여부를 분명히 확인할 수 있습니다.
+
+### 새 서버에 복원할 때: 롤을 먼저 만듭니다
+
+`pg_dump`는 **데이터베이스 하나**의 내용만 담습니다. 앱이 접속할 때 쓰는 롤(`myapp_user`)은 데이터베이스 밖, 서버 전체에 속하므로 덤프에 들어가지 않습니다. 덤프에는 "이 테이블의 주인은 `myapp_user`"라는 정보만 있습니다.
+
+같은 서버에서 복원 시험을 하면 롤이 이미 있어서 이 차이가 드러나지 않습니다. 하지만 새 서버에서 복원하면 `role "myapp_user" does not exist` 오류가 납니다. 그래서 새 서버에서는 다음 순서로 합니다.
+
+1. [앱용 계정과 데이터베이스 만들기](/posts/oracle-cloud-postgresql-app-database)처럼 롤과 빈 데이터베이스를 먼저 만듭니다. 비밀번호는 앱의 비밀값 파일에 적힌 값과 같게 합니다.
+2. 그 빈 데이터베이스에 `pg_restore --exit-on-error -d myapp`으로 복원합니다.
+3. 앱을 띄워 로그인과 주요 화면이 동작하는지 확인합니다.
 
 **백업은 복원해 봐야 의미가 있습니다.** 한 달에 한 번 정도 이 절차로 복원 시험을 하는 것을 권합니다.
 
@@ -122,7 +135,8 @@ sudo -u postgres pg_dump -Fc myapp | sudo tee /var/backups/myapp/manual/before-a
 | 데이터베이스 밖의 파일 | 사용자가 올린 이미지 같은 파일 폴더도 백업하는가 (`tar`로 압축) |
 | 보관 위치 | 같은 서버에만 있으면 서버를 잃을 때 함께 사라짐. 다른 곳(Object Storage, 내 PC)에도 복사하는가 |
 | 보관 기간 | 오래 보관할 백업이 자동 삭제 대상에 들어 있지 않은가 |
-| 복원 시험 | 마지막으로 복원해 본 날짜가 언제인가 |
+| 복원 시험 | 마지막으로 복원해 본 날짜가 언제인가. `--exit-on-error`로 복원해 종료 코드 0을 확인했는가 |
+| 롤 | 새 서버에서 롤을 다시 만들 방법(SQL, 비밀번호 위치)이 적혀 있는가 |
 
 ## 정리
 
