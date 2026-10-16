@@ -12,7 +12,9 @@ seriesOrder: 3
 
 사진 상세 화면은 평소에는 사진과 제품 링크를 **읽는 화면**이고, "편집"을 누르면 같은 자리에서 링크를 고치고 지우고 더하는 **편집 화면**이 됩니다(커밋 `43824d6` "reading/editing mode on detail"). 이 글에서는 한 화면이 두 모드를 오가는 방법을 봅니다.
 
-<!-- 📷 스크린샷: 상세 화면 읽기 모드와 편집 모드 -->
+![가을 코디 사진 옆에 아우터 제품 링크 두 개와 신발 제품 링크 한 개가 묶음별로 놓인 상세 화면](/uploads/capture-fashion-04-detail-read.jpg)
+
+![같은 상세 화면의 편집 모드. 링크마다 이름, 주소, 메모 입력 칸과 저장, 삭제 버튼이 있고 아래에 링크 추가 폼이 있다](/uploads/capture-fashion-03-detail-edit.jpg)
 
 ## 모드는 속성 하나
 
@@ -89,6 +91,10 @@ if(m$.editToggle){
     m$.editToggle.addEventListener('click', toggleEditing);
 }
 ```
+
+편집 모드에서 보이는 "제목·메모·카테고리 수정" 링크는 별도 수정 화면(`/admin/photos/{id}/edit`)으로 이동합니다. 제품 링크가 아닌 사진 자체의 정보는 그 화면에서 고칩니다.
+
+![사진 정보 수정 화면. 사진 썸네일 아래에 제목, 메모 입력 칸과 카테고리 선택 버튼이 있다](/uploads/capture-fashion-08-photo-edit-form.jpg)
 
 ## 저장하면 다시 불러오기
 

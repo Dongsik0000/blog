@@ -20,6 +20,10 @@ seriesOrder: 5
 
 레이아웃과 로그인 화면 모두에 있습니다. 휴대폰 브라우저가 PC 폭으로 그린 뒤 축소하지 않고, 기기 폭에 맞춰 그리게 합니다.
 
+![휴대폰 폭에서 본 사진 목록. 메뉴가 두 줄로 나뉘고 사진 카드가 두 열로 놓여 있다](/uploads/capture-fashion-09-mobile-list.jpg)
+
+![휴대폰 폭에서 본 상세 화면. 사진 아래로 제목, 메모, 아이템별 제품 링크가 이어진다](/uploads/capture-fashion-10-mobile-detail.jpg)
+
 ## 사진 미리보기
 
 등록 폼에서 사진을 고르면 올리기 전에 미리보기를 보여 줍니다(커밋 `43824d6` "upload preview").
@@ -39,6 +43,8 @@ if(file.size > settings.maxBytes){
 ```
 
 `settings.maxBytes`는 주석에 적힌 대로 `web.xml`의 `max-file-size`와 같은 10MB입니다([multipart](/posts/fashion-archive-upload-multipart)).
+
+![사진 올리기 화면. 파일을 고르자 코디 사진 미리보기가 나타나고, 아래에 제목, 메모, 카테고리 입력이 있다](/uploads/capture-fashion-02-upload-preview.jpg)
 
 ## 홈 화면에 추가: manifest.json
 

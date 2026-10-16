@@ -129,6 +129,8 @@ seriesOrder: 2
 
 Ledger의 편집 창 태그는 거래, 고정 항목, 정기 이체, 이체, 자산, 통장 6개입니다.
 
+![거래 수정 창. 금액 4,800원, 지출, 카페/간식, 내용 오후 커피, 신용카드가 선택되어 있다](/uploads/capture-ledger-08-entry-editor.jpg)
+
 ## Tiles와 비교
 
 | | Tiles (fashion-archive) | 태그 파일 (Ledger) |

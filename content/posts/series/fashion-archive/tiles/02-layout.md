@@ -80,7 +80,7 @@ seriesOrder: 2
 
 카테고리 페이지(`/c/summer`)에서는 `<body data-season="summer">`가 됩니다. CSS가 이 속성으로 강조 색(`--season`)을 바꿔, 계절마다 화면 색이 달라집니다. 데이터 값을 HTML 속성으로 두고 CSS가 읽는 방식이라 JS 없이 색이 바뀝니다.
 
-<!-- 📷 스크린샷: 여름과 겨울 카테고리 화면의 색 차이 -->
+![여름 카테고리 화면. 제목 밑줄과 메뉴의 현재 위치 표시가 파란 계열 강조 색으로 바뀌어 있다](/uploads/capture-fashion-07-season-summer.jpg)
 
 ## 본문 JSP
 
@@ -135,6 +135,8 @@ seriesOrder: 2
 ```
 
 레이아웃이 하던 일 중 필요한 것(CSS, `contextPath`, `common.js`)만 직접 싣습니다.
+
+![상단 메뉴 없이 아이디, 비밀번호 칸과 로그인 버튼만 있는 Fashion Archive 로그인 화면](/uploads/capture-fashion-01-login.jpg)
 
 ## 정리
 

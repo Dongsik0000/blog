@@ -22,6 +22,8 @@ Ledger는 Spring Security 없이 로그인을 직접 만들었습니다. `pom.xm
 
 가계부는 개인 기록이라 아무나 가입할 이유가 없습니다. 가입하려면 서버에 정해 둔 **초대 코드**를 알아야 합니다.
 
+![회원가입 화면. 아이디, 비밀번호, 비밀번호 확인, 가입 코드 입력 칸이 있다](/uploads/capture-ledger-02-signup.jpg)
+
 `AuthApiController.signup` (순서만)
 
 ```java
