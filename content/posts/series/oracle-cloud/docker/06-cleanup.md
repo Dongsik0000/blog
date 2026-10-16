@@ -44,12 +44,13 @@ docker images
 
 ## 배포 스크립트에서 자동 정리
 
-배포 스크립트에서 이미지를 새로 만든 직후에 정리하면 따로 신경 쓸 일이 없습니다.
+배포 스크립트에서 새 앱이 응답하는 것을 확인한 직후에 정리하면 따로 신경 쓸 일이 없습니다. 확인보다 먼저 정리하면 새 앱이 실패했을 때 되돌릴 이전 이미지까지 지워질 수 있습니다.
 
-`deploy/deploy.sh` (일부)
+`deploy/deploy.sh` (일부, 전체는 [배포 스크립트 글](/posts/oracle-cloud-deploy-deploy-script))
 
 ```bash
 docker compose up -d --build
+# ... 앱이 응답할 때까지 확인 ...
 docker image prune -f > /dev/null || echo "이미지 정리 실패 (배포는 완료)" >&2
 docker builder prune -f --filter until=168h > /dev/null || echo "빌드 캐시 정리 실패 (배포는 완료)" >&2
 ```
@@ -80,12 +81,12 @@ docker tag myapp:local myapp:prev-$(date +%Y%m%d)
 
 ```bash
 docker rmi myapp:prev-20261001        # 이름으로 이미지 하나 지우기
-docker image prune -a                 # 실행 중인 컨테이너가 쓰지 않는 이미지 모두 (확인 질문 있음)
-docker builder prune                  # 빌드 캐시 전부
+docker image prune -a                 # 어떤 컨테이너도(멈춘 것 포함) 쓰지 않는 이미지 모두 (확인 질문 있음)
+docker builder prune -a               # 사용 중이 아닌 빌드 캐시 모두 (확인 질문 있음)
 docker system df                      # 정리 후 다시 확인
 ```
 
-`docker image prune -a`는 되돌리기용으로 남긴 이미지까지 지웁니다. 지우기 전에 `docker images`로 목록을 확인합니다. 빌드 캐시를 전부 지우면 다음 빌드는 의존성부터 다시 받으므로 오래 걸립니다.
+`docker image prune -a`는 되돌리기용으로 남긴 이미지까지 지웁니다. 반대로 멈춰 있는 컨테이너가 쓰는 이미지는 지우지 않으므로, 안 쓰는 컨테이너가 있다면 먼저 `docker ps -a`로 확인해 지웁니다. `docker builder prune`은 `-a` 없이 쓰면 어떤 빌드에도 연결되지 않은 캐시만 지우고, `-a`를 붙여야 사용 중이 아닌 캐시를 모두 지웁니다. 지우기 전에 `docker images`로 목록을 확인합니다. 빌드 캐시를 전부 지우면 다음 빌드는 의존성부터 다시 받으므로 오래 걸립니다.
 
 ## 정리
 

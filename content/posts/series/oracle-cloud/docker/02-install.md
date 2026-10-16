@@ -60,10 +60,10 @@ sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin dock
 ### 4단계. 동작 확인
 
 ```bash
-sudo docker run hello-world
+sudo docker run --rm hello-world
 ```
 
-"Hello from Docker!" 메시지가 나오면 설치가 끝났습니다. 이때 받은 `hello-world` 이미지는 확인용이라 `docker rmi hello-world`로 지워도 됩니다.
+"Hello from Docker!" 메시지가 나오면 설치가 끝났습니다. `--rm`은 실행이 끝난 컨테이너를 바로 지우는 옵션입니다. 이 옵션 없이 실행하면 멈춘 컨테이너가 남고, 그 컨테이너가 이미지를 쓰고 있어서 이미지가 지워지지 않습니다. 이때 받은 `hello-world` 이미지는 확인용이라 `sudo docker rmi hello-world`로 지워도 됩니다.
 
 ```bash
 docker --version
@@ -99,5 +99,5 @@ id | grep -o docker
 
 - Docker 공식 저장소를 서명 키와 함께 등록하고, `docker-ce`와 compose 플러그인을 설치합니다.
 - ARM64 서버에서도 같은 명령으로 설치됩니다.
-- `docker run hello-world`로 확인합니다.
+- `docker run --rm hello-world`로 확인합니다.
 - `docker` 그룹은 root와 같은 권한이므로 신뢰하는 사용자만 넣습니다.

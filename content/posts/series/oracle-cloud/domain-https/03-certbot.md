@@ -40,7 +40,7 @@ sudo apt install -y certbot python3-certbot-nginx
 
 - DNS가 이 서버를 가리키는가? (`dig example.com +short`)
 - 보안 목록과 iptables에서 **80과 443**이 열려 있는가?
-- nginx 설정에 `server_name example.com www.example.com;`가 있는 server 블록이 있는가?
+- nginx 설정에 `server_name example.com www.example.com;`가 있는 server 블록이 있는가? ([nginx 설치 6단계](/posts/oracle-cloud-domain-https-install-nginx)에서 만들었습니다)
 
 Let's Encrypt는 발급 전에 "이 도메인으로 접속하면 정말 이 서버가 응답하는가"를 **80번 포트로** 확인합니다. 80이 막혀 있으면 발급이 실패합니다.
 
@@ -53,7 +53,7 @@ sudo certbot --nginx -d example.com -d www.example.com
 - `--nginx`: nginx 플러그인을 써서 인증과 설정 변경을 모두 자동으로 합니다.
 - `-d`: 인증서에 넣을 도메인. 여러 개를 넣을 수 있습니다.
 
-처음 실행하면 이메일 주소(만료 알림용)와 약관 동의를 묻습니다. 성공하면 인증서가 `/etc/letsencrypt/live/example.com/`에 저장됩니다.
+처음 실행하면 이메일 주소와 약관 동의를 묻습니다. Let's Encrypt는 2025년 6월 4일부터 인증서 만료 알림 메일을 보내지 않으므로, 이메일을 넣어도 만료 알림은 오지 않습니다. 갱신이 잘 되는지는 [자동 갱신 글](/posts/oracle-cloud-domain-https-renewal-redirect)의 방법으로 직접 확인합니다. 성공하면 인증서가 `/etc/letsencrypt/live/example.com/`에 저장됩니다.
 
 nginx 설정을 직접 고치고 싶다면 인증서만 받는 방법도 있습니다.
 
