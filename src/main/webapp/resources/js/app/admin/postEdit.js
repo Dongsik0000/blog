@@ -22,7 +22,8 @@ App.postEdit = (function(){
 		/* 서버 Map 키 = 폼 name. 불러오기·저장에 같이 쓴다 */
 		FIELDS = ['title', 'summary', 'body', 'category', 'publishedAt', 'slug', 'coverImage', 'coverAlt',
 			'coverCaption', 'coverPrompt', 'hashtags', 'sources'],
-		MAX_IMAGE_BYTES = 5 * 1024 * 1024,
+		MAX_IMAGE_BYTES = 5 * 1024 * 1024,  /* 서버(web.xml) 업로드 한도 */
+		MAX_COVER_WIDTH = 1600,  /* 표지는 이 너비면 충분하다. 더 크거나 한도를 넘으면 브라우저에서 줄여 올린다 */
 
 		settings = {
 			id: '',  /* 저장된 글 id. 새 글이면 '' */
@@ -159,13 +160,18 @@ App.postEdit = (function(){
 			var file = m$.coverFile.files[0];
 			m$.coverFile.value = '';  /* 같은 파일을 다시 골라도 change 가 일어나게 */
 			if (!file) return;
-			if (file.size > MAX_IMAGE_BYTES) {
-				setStatus('이미지는 5MB 이하만 올릴 수 있습니다.', true);
-				return;
-			}
-			setStatus('이미지를 올리는 중입니다.');
-			App.upload(url.upload, file)
+			setStatus('이미지를 준비하는 중입니다.');
+			shrink(file)
+				.then(function(ready){
+					if (ready.size > MAX_IMAGE_BYTES) {
+						setStatus('이미지는 5MB 이하만 올릴 수 있습니다.', true);
+						return null;
+					}
+					setStatus('이미지를 올리는 중입니다.');
+					return App.upload(url.upload, ready);
+				})
 				.then(function(res){
+					if (!res) return;
 					if (res.code !== App.CODE.SUCCESS) {
 						setStatus(res.message || '이미지를 올리지 못했습니다.', true);
 						return;
@@ -176,8 +182,42 @@ App.postEdit = (function(){
 					m$.form.elements.coverAlt.focus();
 				})
 				.catch(function(err){
-					setStatus(err.status === 413 ? '이미지는 5MB 이하만 올릴 수 있습니다.' : '이미지를 올리지 못했습니다. 잠시 후 다시 시도해 주세요.', true);
+					setStatus(err.status === 413 ? '이미지는 5MB 이하만 올릴 수 있습니다.' : '이미지를 올리지 못했습니다. 다른 이미지로 다시 시도해 주세요.', true);
 				});
+		},
+
+		/* 가로가 MAX_COVER_WIDTH 를 넘거나 용량이 한도를 넘으면 캔버스로 줄여 JPEG 로 바꾼다.
+		   GIF 는 캔버스에 그리면 움직임이 사라지므로 그대로 둔다 */
+		shrink = function(file){
+			if (file.type === 'image/gif') return Promise.resolve(file);
+			return new Promise(function(resolve, reject){
+				var img = new Image(),
+					src = URL.createObjectURL(file);
+				img.onload = function(){
+					URL.revokeObjectURL(src);
+					if (img.naturalWidth <= MAX_COVER_WIDTH && file.size <= MAX_IMAGE_BYTES) {
+						resolve(file);
+						return;
+					}
+					var scale = Math.min(1, MAX_COVER_WIDTH / img.naturalWidth),
+						canvas = document.createElement('canvas'),
+						ctx = canvas.getContext('2d');
+					canvas.width = Math.round(img.naturalWidth * scale);
+					canvas.height = Math.round(img.naturalHeight * scale);
+					ctx.fillStyle = '#ffffff';  /* 투명한 부분이 JPEG 에서 검게 되지 않게 */
+					ctx.fillRect(0, 0, canvas.width, canvas.height);
+					ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+					canvas.toBlob(function(blob){
+						if (blob) resolve(new File([blob], 'cover.jpg', {type: 'image/jpeg'}));
+						else reject(new Error('이미지를 변환하지 못했습니다.'));
+					}, 'image/jpeg', 0.9);  /* 4컷 만화의 글씨·선이 뭉개지지 않는 품질 */
+				};
+				img.onerror = function(){
+					URL.revokeObjectURL(src);
+					reject(new Error('이미지 파일을 읽지 못했습니다.'));
+				};
+				img.src = src;
+			});
 		},
 
 		/* 대표 이미지 주소를 숨은 칸에 넣고 미리보기를 바꾼다 */
