@@ -18,7 +18,8 @@ PC 와 휴대폰 브라우저에서 같은 화면으로 읽고 씁니다.
 **읽기**
 - 홈: 최신 글 6개. 가장 최근 글은 표지와 제목을 크게
 - 모든 글: 개발 기록 · IT 뉴스 · IT 장비 주제별 보기, 10개씩 페이지 나누기
-- 글 본문: 소제목으로 만든 목차, 인용 강조 박스, 참고한 기사 목록, 해시태그
+- 글 본문: 소제목으로 만든 목차, 인용 강조 박스, 표, 코드, 본문 이미지, 참고한 기사 목록, 해시태그
+- 시리즈: Oracle Cloud 서버 구축 · Ledger · Fashion Archive 개발 기록을 장 순서로 묶어 읽기(시리즈 화면, 글 안의 이 장의 글 목록, 이전·다음 글)
 
 **댓글**
 - 로그인 없이 이름과 비밀번호로 남기고, 같은 비밀번호로 지웁니다
@@ -26,7 +27,7 @@ PC 와 휴대폰 브라우저에서 같은 화면으로 읽고 씁니다.
 
 **글 관리 (관리자)**
 - 관리자 비밀번호로 로그인하면 상단에 `관리` 메뉴, 글마다 `수정` 링크가 생깁니다
-- 새 글 쓰기 · 수정: 제목, 요약, Markdown 본문, 주제, 발행일, 주소, 대표 이미지 업로드, 이미지 프롬프트, 해시태그, 출처
+- 새 글 쓰기 · 수정: 제목, 요약, Markdown 본문(본문에 이미지 넣기), 주제, 시리즈·장, 발행일, 주소, 대표 이미지 업로드, 이미지 프롬프트, 해시태그, 출처
 - 임시저장 · 발행 · 발행 취소 · 삭제. 임시저장 글은 관리자에게만 보입니다
 - Ctrl+S 로 저장, 저장하지 않고 나가려 하면 먼저 묻습니다
 - 댓글을 비밀번호 없이 지울 수 있습니다
@@ -72,6 +73,7 @@ PC 와 휴대폰 브라우저에서 같은 화면으로 읽고 씁니다.
    ```bash
    psql -U postgres -f db/000_create_db.sql
    psql -U blog_app -d blog -f db/001_schema.sql
+   psql -U blog_app -d blog -f db/002_series.sql
    ```
 2. `mvn package` 로 만든 `target/blog.war` 를 Tomcat 10.1 에 컨텍스트 `/blog` 로 배포합니다.
 3. http://localhost:8080/blog/ 에 접속합니다. 관리 화면은 `/blog/admin/login` 입니다.
@@ -94,6 +96,7 @@ PC 와 휴대폰 브라우저에서 같은 화면으로 읽고 씁니다.
 
 ```bash
 psql -U blog_app -d blog_preview -f db/001_schema.sql   # 처음 한 번
+psql -U blog_app -d blog_preview -f db/002_series.sql
 mvn clean package -Psample
 docker build -t blog:preview .
 # 운영 비밀값을 복사해 DB 주소만 blog_preview 로 바꾼다 (처음 한 번)
@@ -114,6 +117,7 @@ mvn clean package   # 운영 배포 전에는 샘플 없이 다시 빌드
 ```bash
 sudo -u postgres psql -f db/000_create_db.sql
 psql -h 127.0.0.1 -U blog_app -d blog -f db/001_schema.sql
+psql -h 127.0.0.1 -U blog_app -d blog -f db/002_series.sql
 sudo install -D -m 640 -o root -g docker deploy/app.env.example /etc/blog/app.env   # 값 입력
 mvn clean package            # 테스트 포함. 실패하면 WAR 가 만들어지지 않는다
 docker compose up -d --build

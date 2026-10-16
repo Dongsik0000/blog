@@ -14,7 +14,7 @@
             <article class="post-item${featured and visibleCount eq 1 ? ' post-featured' : ''}">
                 <a class="post-link" href="<c:out value='${entryUrl}'/>">
                     <div class="post-copy">
-                        <span class="post-category"><c:out value="${entry.categoryLabel}"/></span>
+                        <span class="post-category"><c:out value="${entry.categoryLabel}"/><c:if test="${not empty entry.seriesTitle}"> · <c:out value="${entry.seriesTitle}"/></c:if></span>
                         <h2><c:out value="${entry.title}"/></h2>
                         <p class="post-summary"><c:out value="${entry.summary}"/></p>
                         <div class="post-meta"><span translate="no">DevMonster</span><span aria-hidden="true">·</span><time datetime="<c:out value='${entry.publishedAt}'/>"><c:out value="${entry.publishedAt}"/></time></div>

@@ -24,6 +24,8 @@
     <mvc:interceptors>
         <!-- 모든 요청: 관리자 로그인 여부를 request 속성 isAdmin 에 넣고, /admin/** 는 로그인해야 통과 -->
         <bean class="blog.interceptor.AdminInterceptor"/>
+        <!-- 모든 요청: 사이드바의 시리즈 목록(request 속성 seriesMenu). 메모리의 정의라 DB 를 읽지 않는다 -->
+        <ref bean="seriesMenuInterceptor"/>
         <!-- POST 는 Ajax 만: 다른 사이트의 폼 전송(CSRF) 차단 -->
         <mvc:interceptor>
             <mvc:mapping path="/comment/**"/>

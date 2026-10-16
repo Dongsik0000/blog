@@ -34,7 +34,12 @@
                         <small id="postSummaryHelp">목록과 글 맨 위에 보이는 한두 문장입니다. 300자까지.</small>
                     </div>
                     <div class="field">
-                        <label for="postBody">본문 (Markdown)</label>
+                        <div class="field-head">
+                            <label for="postBody">본문 (Markdown)</label>
+                            <%-- 파일 칸은 숨기고 라벨을 버튼처럼 보인다(대표 이미지와 같은 방식). 고른 이미지는 커서 위치에 들어간다 --%>
+                            <input class="sr-only" id="bodyImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+                            <label class="button" for="bodyImageFile">본문에 이미지 넣기</label>
+                        </div>
                         <textarea class="editor-body" id="postBody" name="body" rows="24" required aria-describedby="postBodyHelp"></textarea>
                         <details class="editor-help" id="postBodyHelp">
                             <summary>본문 쓰는 법</summary>
@@ -42,8 +47,11 @@
                                 <li><code>## 소제목</code> 목차에 나오는 소제목, <code>### 작은 소제목</code></li>
                                 <li><code>**굵게**</code>, <code>*기울임*</code>. 닫는 ** 바로 앞에 괄호·따옴표를 두고 한글을 붙이면 굵게가 안 됩니다: <code>**이름**(설명)은</code> 처럼 씁니다</li>
                                 <li><code>&gt; 인용</code> 강조 박스. "Dev Monster의 시선" 같은 문단에 씁니다</li>
-                                <li><code>- 목록</code>, 코드는 <code>```</code> 세 개로 감쌉니다</li>
-                                <li>HTML, 본문 속 이미지, 표는 화면에 나오지 않습니다. 기사 주소는 오른쪽 출처 칸에 씁니다</li>
+                                <li><code>- 목록</code>, <code>1. 번호 목록</code>, 코드 글자는 <code>`코드`</code>, 코드 묶음은 <code>```</code> 세 개로 감쌉니다</li>
+                                <li>표: <code>| 칸 | 칸 |</code> 다음 줄에 <code>|---|---|</code></li>
+                                <li>링크: <code>[글자](https://주소)</code>, 블로그 다른 글은 <code>[글자](/posts/주소)</code></li>
+                                <li>이미지: "본문에 이미지 넣기"를 누르면 커서 자리에 <code>![설명](주소)</code>가 들어갑니다. 대괄호 안 설명을 실제 그림에 맞게 고칩니다</li>
+                                <li><code>&lt;!-- 메모 --&gt;</code>는 방문자에게 보이지 않습니다(예: 아직 넣지 않은 스크린샷 자리). HTML 은 화면에 나오지 않습니다</li>
                             </ul>
                         </details>
                     </div>
@@ -63,6 +71,26 @@
                         <div class="field">
                             <label for="postPublishedAt">발행일</label>
                             <input id="postPublishedAt" type="date" name="publishedAt" required>
+                        </div>
+                        <div class="field">
+                            <label for="postSeries">시리즈 (선택)</label>
+                            <select id="postSeries" name="series">
+                                <option value="">시리즈 아님</option>
+                                <c:forEach var="s" items="${seriesList}"><option value="<c:out value='${s.slug}'/>"><c:out value="${s.title}"/></option></c:forEach>
+                            </select>
+                        </div>
+                        <div class="series-fields" id="seriesFields" hidden>
+                            <div class="field">
+                                <label for="postChapter">장</label>
+                                <%-- 모든 시리즈의 장을 두고, postEdit.js 가 고른 시리즈의 장만 보인다 --%>
+                                <select id="postChapter" name="chapter">
+                                    <c:forEach var="s" items="${seriesList}"><c:forEach var="ch" items="${s.chapters}" varStatus="st"><option value="<c:out value='${ch.id}'/>" data-series="<c:out value='${s.slug}'/>"><c:out value="${st.count}"/>. <c:out value="${ch.title}"/></option></c:forEach></c:forEach>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="postSeriesOrder">장 안 순서</label>
+                                <input id="postSeriesOrder" name="seriesOrder" type="number" min="1" max="999" inputmode="numeric">
+                            </div>
                         </div>
                         <div class="field">
                             <label for="postSlug">주소</label>
