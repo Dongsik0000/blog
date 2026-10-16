@@ -61,7 +61,7 @@ front matter 규칙:
 - `title`: "{뉴스 1~2 핵심 키워드 조합} ({M/D} IT 뉴스)". 여러 날을 다루면 "{핵심 키워드} & {핵심 키워드}, {기간} 총정리 ({M/D} IT 뉴스)". 핵심 키워드를 앞에 둡니다. 200자 이하.
 - `slug`: 영문 소문자·숫자·하이픈만. 기본은 `{오늘 날짜}-it-news`. 같은 이름의 파일이 이미 있으면 `{오늘 날짜}-it-news-2` 처럼 바꾸고 파일 이름도 같게 맞춥니다.
 - `summary`: 목록과 글 맨 위에 보이는 한두 문장. 오늘 다룬 뉴스를 관통하는 흐름을 요약합니다. 300자 이하.
-- `coverPrompt`: 오늘 뉴스 전체를 상징하는 대표 이미지 생성 프롬프트, 영어로 한 문단. 실제 회사 로고·제품 디자인·실존 인물·글자를 넣지 않는 추상적·개념적 이미지로 씁니다. 끝에 `no text, no logos, no real people` 을 붙입니다. 이 프롬프트로 아래 "2-1" 의 이미지를 만들고, 프롬프트 자체는 글 댓글 맨 위에 작성자 댓글로 달립니다.
+- `coverPrompt`: 오늘 뉴스로 만든 **4컷 만화** 이미지 프롬프트. 아래 "2-2" 의 틀대로 씁니다. 이 프롬프트로 "2-1" 의 이미지를 만들고, 프롬프트 자체는 글 댓글 맨 위에 작성자 댓글로 달립니다.
 - `coverImage`: `/resources/images/posts/` 뒤에 실제로 커밋한 이미지 파일 이름. 이미지를 커밋하지 못했으면 이 줄을 빼세요.
 - `coverAlt`: 만든 이미지를 보고 **실제로 보이는 것**을 한국어 한 문장으로(200자 이하). 화면을 읽어 주는 프로그램이 읽습니다. `coverImage` 가 있으면 반드시 씁니다.
 - `hashtags`: 오늘 주제 태그 4~6개(예: IT뉴스, AI뉴스, 반도체, 보안, 회사명. 매번 그날 뉴스에 맞게) 뒤에 `DevGear`, `DevMonster`. `#` 은 붙이지 않습니다.
@@ -69,10 +69,25 @@ front matter 규칙:
 
 ### 2-1. 대표 이미지
 
-- `coverPrompt` 로 이미지를 **한 장** 만듭니다. 가로형(가로:세로 16:9 에 가깝게, 예: 1536x1024)으로 만듭니다.
-- 만든 이미지에 글자·로고·실존 인물이 들어갔으면 한 번 다시 만듭니다.
+- `coverPrompt` 로 4컷 만화 이미지를 **한 장** 만듭니다. 가로형(가로:세로 3:2, 예: 1536x1024)으로 만듭니다.
+- 로고·실존 인물이 들어갔거나, 컷마다 캐릭터 모습이 달라졌거나, 말풍선 한글이 깨졌으면 한 번 다시 만듭니다.
+- 다시 만들어도 한글이 깨지면 프롬프트의 "Speech bubbles ..." 문장을 `Speech bubbles contain only symbols such as !, ? and ..., no letters.` 로 바꿔 만들고, `coverPrompt` 도 그렇게 고칩니다.
+- `coverAlt` 는 컷별로 짧게 씁니다. 예: 4컷 만화. 1컷 DevMonster 가 노트북을 연다, 2컷 빛나는 칩을 보고 놀란다, 3컷 자물쇠를 잠근다, 4컷 '나도 공부해야지' 라고 말한다.
 - 파일 형식은 PNG, JPEG, WEBP 중 하나이며, **확장자는 실제 형식과 같게** 씁니다(PNG 면 `.png`). 5MB 이하로 만듭니다.
 - 이미지를 글자(base64 등)로 바꿔 파일에 저장하지 않습니다. 그런 파일은 이미지로 인식되지 않아 블로그가 표지 없이 글만 등록합니다.
+
+### 2-2. 대표 이미지 프롬프트 (4컷 만화)
+
+`coverPrompt` 는 아래 틀을 그대로 쓰고 `{...}` 만 오늘 뉴스에 맞게 채웁니다. 영어로 쓰고, 말풍선 대사만 한국어로 씁니다.
+
+```text
+A Korean four-panel comic (4-cut webtoon) in a 2x2 grid, landscape 3:2 canvas, thin white gutters between panels, read left to right then top to bottom. Clean webtoon line art, flat soft colors, warm light gray backgrounds, a single orange accent color. The same main character appears in every panel with an identical design: DevMonster, a friendly small cobalt-blue monster with two short rounded horns, simple dark eyes and round charcoal eyeglasses, often with a small silver laptop. Panel 1 (top left): {오늘의 도입 장면}. Panel 2 (top right): {첫 번째 핵심 뉴스를 사물·은유로}. Panel 3 (bottom left): {두 번째 핵심 뉴스 또는 반전}. Panel 4 (bottom right): {DevMonster 의 결론, 가벼운 웃음 포인트}. Speech bubbles with short Korean lines only: panel 1 '{대사}', panel 2 '{대사}', panel 3 '{대사}', panel 4 '{대사}'. No other text, no company logos or brand names, no real people.
+```
+
+- 5개 뉴스 중 화제성이 가장 큰 2~3개만 2·3컷에 담고 나머지는 뺍니다. 4컷은 신입 웹개발자 DevMonster 의 결론입니다(예: '나도 공부해야지').
+- 회사·제품·인물은 그리지 않고 사물로 바꿉니다: AI 는 작고 친근한 로봇, 반도체는 빛나는 칩, 보안은 자물쇠·방패, 클라우드는 구름 모양 서버, 기기는 상표 없는 휴대폰·노트북.
+- 대사는 컷마다 하나, 한국어 8자 이하, **작은따옴표**로 감쌉니다(front matter 값 안에는 큰따옴표를 쓸 수 없습니다).
+- 장면 설명은 영어로 한두 문장씩, 전체 2000자 이하로 씁니다.
 
 ### 3. 본문 구성
 
@@ -138,7 +153,7 @@ front matter 규칙:
 - 뉴스 5개 모두 `## 번호. 카테고리: "헤드라인"` / **핵심 뉴스:** / 본문 2문단 / `> **Dev Monster의 시선:**` 이 있는가
 - 굵게 규칙을 어긴 곳(`**...)**한글`, `**...'**한글` 같은 형태)이 없는가
 - 이모지, 이미지, 표, 링크, HTML, 구분선, "출처:" 줄이 본문에 없는가
-- `coverPrompt` 가 영어이고 글자·로고·실존 인물을 요구하지 않으며, 이미지에도 그런 것이 없는가
+- `coverPrompt` 가 "2-2" 의 4컷 틀을 따르고, 이미지에 로고·실존 인물·깨진 글자가 없으며, 네 컷의 DevMonster 가 같은 모습인가
 - 문장이 자연스럽고, 괄호 속 메모나 `{...}` 같은 자리표시가 남아 있지 않은가
 
 ### 7. 커밋

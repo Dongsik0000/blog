@@ -4,7 +4,7 @@ Claude 에 GitHub 연결(MCP)을 붙여 매일 실행하는 프롬프트입니�
 
 이미지까지 한 번에 넣는 GPT 용은 [NEWS_PROMPT_GPT.md](NEWS_PROMPT_GPT.md) 입니다.
 
-`coverPrompt` 는 배포 후 이 글의 댓글 맨 위에 DevMonster(작성자) 댓글로 달립니다. 그 프롬프트로 이미지를 만든 뒤 관리 화면의 글 수정에서 "이미지 올리기"로 넣습니다.
+`coverPrompt` 는 배포 후 이 글의 댓글 맨 위에 DevMonster(작성자) 댓글로 달립니다. 그 프롬프트를 복사해 웹 Gemini 앱(gemini.google.com)에 붙여 넣어 4컷 이미지를 만들고, 관리 화면의 글 수정에서 "이미지 올리기"로 넣고 이미지 설명을 써서 저장합니다.
 
 글 형식의 기준은 [README.md](README.md) 입니다. 두 문서가 다르면 README.md 를 따르고 이 프롬프트를 고칩니다.
 
@@ -58,10 +58,23 @@ front matter 규칙:
 - `title`: "{뉴스 1~2 핵심 키워드 조합} ({M/D} IT 뉴스)". 여러 날을 다루면 "{핵심 키워드} & {핵심 키워드}, {기간} 총정리 ({M/D} IT 뉴스)". 핵심 키워드를 앞에 둡니다. 200자 이하.
 - `slug`: 영문 소문자·숫자·하이픈만. 기본은 `{오늘 날짜}-it-news`. 같은 이름의 파일이 이미 있으면 `{오늘 날짜}-it-news-2` 처럼 바꾸고 파일 이름도 같게 맞춥니다.
 - `summary`: 목록과 글 맨 위에 보이는 한두 문장. 오늘 다룬 뉴스를 관통하는 흐름을 요약합니다. 300자 이하.
-- `coverPrompt`: 오늘 뉴스 전체를 상징하는 대표 이미지 생성 프롬프트, 영어로 한 문단. 실제 회사 로고·제품 디자인·실존 인물·글자를 넣지 않는 추상적·개념적 이미지로 씁니다. 끝에 `no text, no logos, no real people` 을 붙입니다. 이 프롬프트는 글 댓글 맨 위에 작성자 댓글로 달리고, 사람이 이미지를 만들어 나중에 넣습니다.
+- `coverPrompt`: 오늘 뉴스로 만든 **4컷 만화** 이미지 프롬프트. 아래 "2-1" 의 틀대로 씁니다. 글 댓글 맨 위에 작성자 댓글로 달리고, 사람이 이 프롬프트로 이미지를 만들어 나중에 넣습니다.
 - `hashtags`: 오늘 주제 태그 4~6개(예: IT뉴스, AI뉴스, 반도체, 보안, 회사명. 매번 그날 뉴스에 맞게) 뒤에 `DevGear`, `DevMonster`. `#` 은 붙이지 않습니다.
 - `sources`: 다룬 기사마다 하나씩, 본문에 나온 순서대로. `url` 은 반드시 `https://` 로 시작하는 실제 기사 주소.
 - `coverImage`, `coverAlt` 는 쓰지 않습니다. 이미지는 사람이 관리 화면에서 넣습니다.
+
+### 2-1. 대표 이미지 프롬프트 (4컷 만화)
+
+`coverPrompt` 는 아래 틀을 그대로 쓰고 `{...}` 만 오늘 뉴스에 맞게 채웁니다. 영어로 쓰고, 말풍선 대사만 한국어로 씁니다.
+
+```text
+A Korean four-panel comic (4-cut webtoon) in a 2x2 grid, landscape 3:2 canvas, thin white gutters between panels, read left to right then top to bottom. Clean webtoon line art, flat soft colors, warm light gray backgrounds, a single orange accent color. The same main character appears in every panel with an identical design: DevMonster, a friendly small cobalt-blue monster with two short rounded horns, simple dark eyes and round charcoal eyeglasses, often with a small silver laptop. Panel 1 (top left): {오늘의 도입 장면}. Panel 2 (top right): {첫 번째 핵심 뉴스를 사물·은유로}. Panel 3 (bottom left): {두 번째 핵심 뉴스 또는 반전}. Panel 4 (bottom right): {DevMonster 의 결론, 가벼운 웃음 포인트}. Speech bubbles with short Korean lines only: panel 1 '{대사}', panel 2 '{대사}', panel 3 '{대사}', panel 4 '{대사}'. No other text, no company logos or brand names, no real people.
+```
+
+- 5개 뉴스 중 화제성이 가장 큰 2~3개만 2·3컷에 담고 나머지는 뺍니다. 4컷은 신입 웹개발자 DevMonster 의 결론입니다(예: '나도 공부해야지').
+- 회사·제품·인물은 그리지 않고 사물로 바꿉니다: AI 는 작고 친근한 로봇, 반도체는 빛나는 칩, 보안은 자물쇠·방패, 클라우드는 구름 모양 서버, 기기는 상표 없는 휴대폰·노트북.
+- 대사는 컷마다 하나, 한국어 8자 이하, **작은따옴표**로 감쌉니다(front matter 값 안에는 큰따옴표를 쓸 수 없습니다).
+- 장면 설명은 영어로 한두 문장씩, 전체 2000자 이하로 씁니다.
 
 ### 3. 본문 구성
 
@@ -126,7 +139,7 @@ front matter 규칙:
 - 뉴스 5개 모두 `## 번호. 카테고리: "헤드라인"` / **핵심 뉴스:** / 본문 2문단 / `> **Dev Monster의 시선:**` 이 있는가
 - 굵게 규칙을 어긴 곳(`**...)**한글`, `**...'**한글` 같은 형태)이 없는가
 - 이모지, 이미지, 표, 링크, HTML, 구분선, "출처:" 줄이 본문에 없는가
-- `coverPrompt` 가 영어이고 글자·로고·실존 인물을 요구하지 않는가
+- `coverPrompt` 가 "2-1" 의 4컷 틀을 따르고, 대사가 작은따옴표의 8자 이하 한국어이며, 로고·실존 인물을 요구하지 않는가
 - 문장이 자연스럽고, 괄호 속 메모나 `{...}` 같은 자리표시가 남아 있지 않은가
 
 ### 7. 커밋

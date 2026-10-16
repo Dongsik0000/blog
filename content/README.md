@@ -6,7 +6,7 @@ AI(GPT·Claude)가 쓰는 글은 `content/posts/`에 Markdown 파일로 커밋�
 
 매일 IT 뉴스 글을 쓰는 AI 프롬프트는 두 가지입니다. 이 문서의 형식 규칙이 기준이며, 규칙을 바꾸면 프롬프트도 함께 고칩니다.
 
-- [NEWS_PROMPT_CLAUDE.md](NEWS_PROMPT_CLAUDE.md): 글만 커밋. 이미지는 관리 화면에서 올린다
+- [NEWS_PROMPT_CLAUDE.md](NEWS_PROMPT_CLAUDE.md): 글만 커밋. 이미지는 댓글의 4컷 프롬프트로 웹 Gemini 앱에서 만들어 관리 화면에서 올린다 (기본 방식)
 - [NEWS_PROMPT_GPT.md](NEWS_PROMPT_GPT.md): 글과 대표 이미지를 함께 커밋. 이미지는 `content/images/` 에 두고 `coverImage: "/resources/images/posts/파일명"` 으로 연결한다
 
 두 경우 모두 `coverPrompt` 는 글 댓글 맨 위에 DevMonster(작성자) 댓글로 달린다.
