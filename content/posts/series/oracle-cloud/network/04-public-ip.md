@@ -41,10 +41,16 @@ seriesOrder: 4
 ## 따라 하기: 예약 IP 붙이기
 
 1. 검색창에 `Reserved Public IPs`를 입력해 이동하고 **Reserve Public IP Address**로 예약 IP를 만듭니다.
-2. 서버(인스턴스) 상세 화면에서 **Attached VNICs** → 주 VNIC → **IPv4 Addresses**로 이동합니다.
-3. 기존 임시 공인 IP를 해제(No public IP)하고, 만든 예약 IP를 선택해 붙입니다.
+2. 인스턴스 상세 화면의 **Networking** 탭에서 **Attached VNICs**의 VNIC 이름을 누릅니다.
+3. **IP administration** 탭에서 주 사설 IP 줄의 **⋮**(Actions) → **Edit**를 누릅니다.
+4. 사설 IP에 공인 IP가 이미 붙어 있으면 새 공인 IP를 붙일 수 없습니다. **Public IP type**을 **No public IP**로 바꾸고 **Update**를 눌러 임시 IP를 먼저 해제합니다.
+5. 다시 **Edit**를 눌러 **Public IP type**에서 **Reserved public IP**를 고르고, 1번에서 만든 예약 IP를 선택한 뒤 **Update**를 누릅니다.
 
-<!-- 📷 스크린샷: VNIC의 IPv4 주소 편집 화면 -->
+<!-- 📷 스크린샷: VNIC의 IP administration 편집 화면 -->
+
+4번에서 임시 IP를 해제하는 순간 **이전 주소로 연결된 SSH가 끊깁니다.** 5번까지 마친 뒤 새 주소로 다시 접속합니다. 내 PC의 `~/.ssh/config`, DNS, 그 밖에 이전 주소를 적어 둔 곳은 모두 새 주소로 바꿉니다.
+
+> 메뉴 경로는 2026-10-16 Oracle 공식 문서 "Assigning a Reserved Public IP" 기준입니다. 콘솔이 바뀌어 이름이 다르면 VNIC 화면에서 사설 IP를 편집하는 메뉴를 찾습니다.
 
 > 예약 공인 IP의 무료 개수 한도는 공식 "Always Free Resources" 문서에 나와 있지 않습니다. 만들기 전에 콘솔의 한도(Limits) 화면이나 요금 안내를 확인합니다.
 ## 서버 안에서 공인 IP가 안 보이는 이유

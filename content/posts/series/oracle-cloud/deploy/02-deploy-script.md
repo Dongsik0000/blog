@@ -27,6 +27,14 @@ main() {
     cd /srv/myapp
     git pull --ff-only
     docker compose up -d --build
+
+    for _ in $(seq 1 24); do
+        curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8080/shop/ && break
+        sleep 5
+    done
+    curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8080/shop/ \
+        || { echo "배포 후 앱이 응답하지 않습니다: docker compose logs 로 확인하세요" >&2; return 1; }
+
     docker image prune -f > /dev/null || echo "이미지 정리 실패 (배포는 완료)" >&2
     docker builder prune -f --filter until=168h > /dev/null || echo "빌드 캐시 정리 실패 (배포는 완료)" >&2
     echo "배포 완료: $(git log --oneline -1)"
@@ -87,6 +95,30 @@ git pull --ff-only
 
 새 코드로 이미지를 빌드하고, 바뀐 컨테이너를 새로 만들어 교체합니다. 이 순간 기존 컨테이너가 내려가고 새 컨테이너가 뜨므로, Tomcat이 다시 뜨는 동안(수십 초) 그 앱에 접속하면 **502**가 날 수 있습니다. 개인 프로젝트라면 짧은 중단은 감수하는 것이 단순합니다.
 
+## 앱이 실제로 응답하는지 확인
+
+`docker compose up -d`는 컨테이너를 **시작시키고 바로** 끝납니다. 이 명령이 성공했다고 해서 Tomcat이 다 떴는지, 앱이 데이터베이스에 연결했는지는 알 수 없습니다. 여기서 바로 "배포 완료"를 출력하면, 앱이 시작하다 죽어도 GitHub Actions에는 성공으로 표시됩니다.
+
+```bash
+for _ in $(seq 1 24); do
+    curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8080/shop/ && break
+    sleep 5
+done
+curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8080/shop/ \
+    || { echo "배포 후 앱이 응답하지 않습니다: docker compose logs 로 확인하세요" >&2; return 1; }
+```
+
+| 부분 | 뜻 |
+|---|---|
+| `for _ in $(seq 1 24)` ... `sleep 5` | 5초 간격으로 최대 24번(2분) 앱 주소를 요청해 봅니다. 응답이 오면 `break`로 바로 빠져나옵니다 |
+| `curl -f` | 응답 코드가 400 이상이면 실패로 처리합니다. 앱이 500 오류를 내는 것도 실패로 잡습니다 |
+| `--max-time 5` | 한 번 요청에 5초 넘게 걸리면 포기합니다 |
+| 마지막 `curl ... \|\| { ...; return 1; }` | 2분이 지나도 응답이 없으면 실패로 끝냅니다. GitHub Actions에 실패로 표시됩니다 |
+
+반복문 안의 `curl` 실패는 `&&` 앞에 있어 `set -e`가 발동하지 않습니다. 그래서 마지막에 한 번 더 요청해 결과를 판정합니다. 확인할 주소는 앱이 데이터베이스를 읽어야 그릴 수 있는 페이지로 고르면, DB 연결까지 함께 확인됩니다. 2분은 Tomcat이 뜨는 시간에 맞춘 값이므로 앱에 맞게 늘리거나 줄입니다.
+
+이미지와 캐시 정리는 이 확인을 **통과한 뒤에** 합니다. 확인 전에 지우면, 새 앱이 실패했을 때 되돌릴 이전 이미지까지 지워질 수 있습니다.
+
 ## main 함수로 감싸는 이유
 
 스크립트 전체를 `main()` 함수로 감싸고 마지막에 `main "$@"`과 `exit`를 둡니다. bash는 스크립트를 실행하면서 파일을 조금씩 읽는데, 실행 도중 `git pull`이 **이 스크립트 파일 자체를 바꿀 수 있습니다.** 함수로 감싸면 bash가 함수 전체를 먼저 읽은 뒤 실행하므로, 실행 중 파일이 바뀌어도 엉뚱한 줄을 실행하지 않습니다. `exit`는 그 뒤에 무엇이 추가되어도 읽지 않게 합니다.
@@ -101,7 +133,8 @@ bash /srv/myapp/deploy/deploy.sh
 
 | 결과 | 의미 |
 |---|---|
-| 마지막 줄 `배포 완료: <커밋>` | 성공 |
+| 마지막 줄 `배포 완료: <커밋>` | 성공. 앱이 응답하는 것까지 확인됐습니다 |
+| `배포 후 앱이 응답하지 않습니다` | 컨테이너는 떴지만 앱이 응답하지 않습니다. `docker compose logs`에서 시작 오류를 찾습니다 |
 | `Not possible to fast-forward` | 서버 코드가 GitHub과 갈라졌습니다. 서버에서 고친 내용을 확인하고 정리합니다 |
 | `permission denied ... docker.sock` | 실행한 사용자가 `docker` 그룹이 아닙니다 ([Docker 설치](/posts/oracle-cloud-docker-install)) |
 | 빌드 중 오류 | 출력의 마지막 오류 줄을 보고 코드나 Dockerfile을 고칩니다 |
@@ -111,4 +144,5 @@ bash /srv/myapp/deploy/deploy.sh
 - `set -euo pipefail`로 실패하면 즉시 멈추고, 실패해도 되는 명령에만 `|| ...`를 붙입니다.
 - `flock`으로 여러 앱의 배포를 한 번에 하나씩 실행합니다.
 - `git pull --ff-only`로 서버 코드가 GitHub과 갈라졌으면 배포를 멈춥니다.
+- 컨테이너를 띄운 뒤 앱 주소에 실제로 요청해, 응답할 때만 배포 성공으로 끝냅니다.
 - 스크립트를 `main` 함수로 감싸 실행 중 자기 파일이 바뀌어도 안전하게 합니다.

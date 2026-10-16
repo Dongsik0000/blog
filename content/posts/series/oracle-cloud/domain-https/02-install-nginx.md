@@ -70,6 +70,47 @@ Server: nginx/1.24.0 (Ubuntu)
 
 <!-- 📷 스크린샷: Welcome to nginx! 페이지 -->
 
+### 6단계. 도메인용 사이트 설정 만들기
+
+지금 응답하는 것은 설치 때 들어 있던 **기본 사이트**(`default`)입니다. 다음 글에서 certbot이 HTTPS 설정을 넣으려면, 내 도메인 이름(`server_name`)이 적힌 사이트 설정이 있어야 합니다. 기본 사이트는 `server_name _;`라서 certbot이 내 도메인의 설정으로 찾지 못합니다.
+
+`/etc/nginx/sites-available/example.com`
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.com www.example.com;
+
+    root /var/www/html;
+    index index.html index.nginx-debian.html;
+}
+```
+
+| 줄 | 뜻 |
+|---|---|
+| `listen 80;` / `listen [::]:80;` | IPv4와 IPv6의 80번 포트에서 받음 |
+| `server_name example.com www.example.com;` | 이 이름으로 들어온 요청을 이 블록이 처리. certbot도 이 줄을 보고 고칠 블록을 찾습니다 |
+| `root`, `index` | 지금은 기본 사이트와 같은 Welcome 페이지를 보여 줌. 실제 내용은 [nginx 장](/posts/oracle-cloud-nginx-static-site)에서 바꿉니다 |
+
+`listen`에 `default_server`를 붙이지 않습니다. 기본 사이트가 이미 `default_server`이므로, 둘 다 붙이면 "duplicate default server" 오류가 납니다. 붙이지 않으면 도메인으로 온 요청은 이 블록이, IP 주소로 온 요청은 기본 사이트가 처리합니다. 기본 사이트를 정리하는 방법은 [설정 파일 구조](/posts/oracle-cloud-nginx-config-structure)에서 다룹니다.
+
+설정을 켜고, 검사한 뒤 적용합니다.
+
+```bash
+sudo ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+| 명령 | 뜻 |
+|---|---|
+| `ln -s ...` | `sites-enabled`에 링크를 만들어 이 사이트를 켬 |
+| `nginx -t` | 설정 문법 검사. `syntax is ok`와 `test is successful`이 나와야 다음으로 넘어갑니다 |
+| `systemctl reload nginx` | 끊김 없이 새 설정을 적용 |
+
+`curl -I http://example.com`이 `200 OK`면 도메인으로 들어온 요청을 이 설정이 받고 있습니다. 이제 [certbot으로 인증서를 받을](/posts/oracle-cloud-domain-https-certbot) 준비가 됐습니다.
+
 ## 안 될 때 확인 순서
 
 서버 안의 `curl`은 되는데 브라우저에서 안 된다면, 서버까지 오는 길이 막힌 것입니다.
@@ -97,4 +138,5 @@ server_tokens off;
 - `sudo apt install nginx`로 설치하면 바로 실행되고 부팅 때 자동 실행됩니다.
 - `curl -I http://127.0.0.1`로 서버 안에서 먼저 확인하고, 그다음 브라우저로 확인합니다.
 - 서버 안에서는 되는데 밖에서 안 되면 **보안 목록, iptables, DNS** 순으로 봅니다.
+- `server_name`에 내 도메인을 적은 사이트 설정을 만들어 켜 둡니다. 다음 글의 certbot이 이 설정을 찾아 HTTPS를 넣습니다.
 - `server_tokens off;`로 버전 정보를 숨깁니다.

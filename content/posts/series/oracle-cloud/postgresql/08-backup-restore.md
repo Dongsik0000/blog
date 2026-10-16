@@ -36,7 +36,11 @@ umask 077   # 덤프에 회원 정보 등이 그대로 있으므로 root만 읽�
 BACKUP_DIR=/var/backups/myapp
 mkdir -p "$BACKUP_DIR"
 
-sudo -u postgres pg_dump -Fc myapp > "$BACKUP_DIR/myapp-$(date +%F).dump"
+FILE="$BACKUP_DIR/myapp-$(date +%F-%H%M%S).dump"
+trap 'rm -f "$FILE.tmp"' EXIT   # 실패하면 쓰다 만 임시 파일을 지움
+
+sudo -u postgres pg_dump -Fc myapp > "$FILE.tmp"
+mv "$FILE.tmp" "$FILE"
 find "$BACKUP_DIR" -name 'myapp-*.dump' -mtime +30 -delete
 ```
 
@@ -44,8 +48,17 @@ find "$BACKUP_DIR" -name 'myapp-*.dump' -mtime +30 -delete
 |---|---|
 | `set -euo pipefail` | 오류가 나면 즉시 멈춤. 백업이 실패했는데 성공한 것처럼 넘어가지 않게 합니다 (자세한 뜻은 [배포 스크립트](/posts/oracle-cloud-deploy-deploy-script)에서) |
 | `umask 077` | 새 파일을 root만 읽을 수 있게 만듦 ([권한 글](/posts/oracle-cloud-linux-users-permissions) 참고) |
-| `pg_dump -Fc myapp > .../myapp-$(date +%F).dump` | 날짜가 들어간 파일 이름으로 백업 (예: `myapp-2026-10-07.dump`) |
+| `FILE=...myapp-$(date +%F-%H%M%S).dump` | 날짜와 시각이 들어간 파일 이름 (예: `myapp-2026-10-07-041000.dump`). 같은 날 다시 실행해도 기존 백업과 이름이 겹치지 않습니다 |
+| `trap 'rm -f "$FILE.tmp"' EXIT` | 스크립트가 끝날 때 임시 파일이 남아 있으면 지움. 덤프가 실패했을 때 쓰다 만 파일이 쌓이지 않게 합니다 |
+| `pg_dump -Fc myapp > "$FILE.tmp"` | 먼저 **임시 파일**에 백업 |
+| `mv "$FILE.tmp" "$FILE"` | 덤프가 성공했을 때만 최종 이름으로 바꿈. 실패하면 `set -e` 때문에 이 줄까지 오지 않습니다 |
 | `find ... -mtime +30 -delete` | 30일보다 오래된 백업 삭제. 디스크가 백업으로 가득 차지 않게 합니다 |
+
+### 왜 임시 파일에 먼저 쓰는가
+
+셸은 `> 파일`을 만나면 명령을 실행하기 **전에** 그 파일을 먼저 비웁니다. 날짜만 넣은 이름(`myapp-2026-10-07.dump`)에 바로 쓰면, 같은 날 다시 실행했을 때 아침의 정상 백업이 먼저 비워집니다. 이어서 `pg_dump`가 실패하면 정상 백업도, 새 백업도 없는 상태가 됩니다. `set -e`는 실패한 뒤에 멈출 뿐이라 이미 비워진 파일을 되살리지 못합니다.
+
+그래서 이름이 겹치지 않게 시각까지 넣고, 임시 파일에 다 쓴 뒤 성공했을 때만 이름을 바꿉니다. 그러면 백업 폴더의 `.dump` 파일은 **끝까지 성공한 백업**만 남습니다.
 
 ### 설치
 
@@ -67,7 +80,7 @@ journalctl -u myapp-backup.service --no-pager -n 3      # 마지막 실행 결�
 sudo ls -la /var/backups/myapp | tail -3                 # 최근 백업 파일
 ```
 
-날짜별 파일이 하루에 하나씩 늘고, 30일보다 오래된 파일은 없어야 정상입니다.
+백업 파일이 하루에 하나씩 늘고, `.tmp` 파일이 남아 있지 않고, 30일보다 오래된 파일은 없어야 정상입니다.
 
 ## 복원하기
 
@@ -78,7 +91,7 @@ sudo ls -la /var/backups/myapp | tail -3                 # 최근 백업 파일
 sudo -u postgres createdb myapp_restore_test
 
 # 2. 백업 파일 복원
-sudo cat /var/backups/myapp/myapp-2026-10-07.dump | sudo -u postgres pg_restore -d myapp_restore_test
+sudo cat /var/backups/myapp/myapp-2026-10-07-041000.dump | sudo -u postgres pg_restore -d myapp_restore_test
 
 # 3. 데이터 확인 (테이블 이름은 앱에 맞게)
 sudo -u postgres psql -d myapp_restore_test -Atc "select count(*) from app_user"
@@ -114,7 +127,7 @@ sudo -u postgres pg_dump -Fc myapp | sudo tee /var/backups/myapp/manual/before-a
 ## 정리
 
 - `pg_dump -Fc`로 데이터베이스를 압축된 파일 하나로 백업합니다.
-- 스크립트는 `set -euo pipefail`, `umask 077`, 날짜 파일명, 보관 기간으로 안전하게 만듭니다.
+- 스크립트는 `set -euo pipefail`, `umask 077`, 시각까지 넣은 파일명, 임시 파일, 보관 기간으로 안전하게 만듭니다.
 - 매일 실행은 systemd timer가 맡습니다.
 - 복원은 **새 데이터베이스에 먼저** 해서 확인하고, 주기적으로 복원 시험을 합니다.
 - 백업은 다른 장소에도 두어야 서버를 잃었을 때 살아남습니다.

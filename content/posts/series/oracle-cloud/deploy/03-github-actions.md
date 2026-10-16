@@ -65,7 +65,17 @@ jobs:
 
 ### concurrency: 겹치지 않게
 
-짧은 시간에 두 번 push하면 워크플로도 두 번 실행됩니다. `concurrency.group`이 같은 실행은 **하나씩만** 돌고, 나머지는 기다립니다. `cancel-in-progress: false`는 진행 중인 배포를 중간에 끊지 않는다는 뜻입니다. 배포 도중에 끊기면 컨테이너가 반쯤 바뀐 상태로 남을 수 있기 때문입니다.
+짧은 시간에 여러 번 push하면 워크플로도 여러 번 실행됩니다. `concurrency.group`이 같은 실행은 **한 번에 하나만** 돕니다. `cancel-in-progress: false`는 진행 중인 배포를 중간에 끊지 않는다는 뜻입니다. 배포 도중에 끊기면 컨테이너가 반쯤 바뀐 상태로 남을 수 있기 때문입니다.
+
+기다리는 실행은 **하나만** 남습니다. 배포 A가 도는 동안 B와 C가 차례로 들어오면, 기다리던 B는 취소되고 C가 대기합니다.
+
+| 순서 | A (실행 중) | B | C |
+|---|---|---|---|
+| B push | 계속 실행 | 대기 | |
+| C push | 계속 실행 | **취소** | 대기 |
+| A 끝남 | 완료 | | 실행 |
+
+배포에서는 이 동작이 문제가 되지 않습니다. 배포 스크립트가 `git pull`로 **그 시점의 최신 main**을 받기 때문에, C가 실행되면 B의 변경도 함께 배포됩니다. 모든 실행을 하나씩 다 돌려야 하는 작업이라면 `concurrency`에 `queue: max`를 더해 최대 100개까지 대기시킬 수 있습니다. 이 옵션은 `cancel-in-progress: true`와 함께 쓸 수 없습니다.
 
 이 설정은 **같은 저장소 안에서만** 동작합니다. 다른 앱 저장소의 배포와 겹치는 것은 서버 쪽 [flock](/posts/oracle-cloud-deploy-deploy-script)이 막습니다.
 
@@ -124,18 +134,19 @@ ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub           # 서버에서
 
 1. 아무 커밋이나 main에 push합니다.
 2. 저장소의 **Actions** 탭에서 `deploy` 워크플로를 엽니다.
-3. 스텝 로그 마지막에 `배포 완료: <커밋>`이 보이면 성공입니다.
+3. 스텝 로그 마지막에 `배포 완료: <커밋>`이 보이면 성공입니다. 배포 스크립트가 앱의 응답까지 확인한 뒤에 출력하는 줄입니다.
 
 | 로그 메시지 | 원인 |
 |---|---|
 | `Permission denied (publickey)` | 서버 `authorized_keys`에 공개 키가 없거나, Secrets의 개인 키가 잘렸습니다(줄바꿈 포함 전체를 넣어야 함) |
 | `Host key verification failed` | `DEPLOY_KNOWN_HOSTS`가 비었거나 서버 키와 다릅니다 |
 | `Connection timed out` | `DEPLOY_HOST`가 틀렸거나 22번 포트가 막혔습니다 |
+| `배포 후 앱이 응답하지 않습니다` | 컨테이너는 떴지만 앱이 시작하지 못했습니다. 서버에서 `docker compose logs`로 원인을 찾습니다 |
 | 스크립트의 오류 메시지 | 서버에서 [손으로 실행](/posts/oracle-cloud-deploy-deploy-script)해 같은 오류가 나는지 봅니다 |
 
 ## 정리
 
 - 워크플로는 main에 push되면 서버에 SSH로 접속해 `deploy.sh`를 실행합니다.
-- `concurrency`로 같은 저장소의 배포가 겹치지 않게 합니다.
+- `concurrency`로 같은 저장소의 배포가 겹치지 않게 합니다. 대기는 하나만 남고, 최신 실행이 최신 main을 배포합니다.
 - 비밀값은 Secrets에 두고 `env`로 넘깁니다.
 - `known_hosts`로 진짜 서버인지 확인하고, 확인을 끄는 옵션은 쓰지 않습니다.

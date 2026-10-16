@@ -30,8 +30,8 @@ seriesOrder: 2
 
 ### 2. 배치 (Placement)
 
-- **Availability domain**: 기본값을 그대로 둡니다. 데이터 센터 안의 구역입니다.
-- **Fault domain**: Oracle이 고르게 둡니다. 같은 구역 안에서 장애를 나누는 단위입니다.
+- **Availability domain**: 기본값을 그대로 둡니다. 리전 안에 있는 하나 이상의 데이터 센터로, 다른 Availability domain과 독립되어 있습니다.
+- **Fault domain**: Oracle이 고르게 둡니다. 한 Availability domain 안에서 하드웨어와 설비를 나눈 묶음으로, 장애나 점검의 영향을 나누는 단위입니다.
 
 ### 3. 이미지와 Shape
 
