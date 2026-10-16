@@ -126,6 +126,13 @@ docker compose up -d --build
 - 컨테이너는 호스트 PostgreSQL 에 붙기 위해 host 네트워크를 쓰고, Tomcat 은 `127.0.0.1:8082` 에만 열립니다.
 - nginx 설정은 `deploy/nginx-blog.conf` 파일 머리말을 따릅니다. 이미지 업로드를 위해 요청 크기를 6MB 까지 받습니다.
 - 업로드한 이미지는 호스트 `/var/lib/blog/uploads` 에 남습니다. DB 와 함께 백업 대상입니다.
+- 백업: 매일 04:20 에 DB 덤프와 업로드 폴더 압축을 `/var/backups/blog` 에 30일 보관합니다. 글은 처음 한 번만 md 에서 가져오고 이후 수정은 DB 에만 있으므로, DB 백업이 글의 원본입니다.
+
+  ```bash
+  sudo install -m 750 deploy/backup.sh /usr/local/bin/blog-backup
+  sudo install -m 644 deploy/blog-backup.service deploy/blog-backup.timer /etc/systemd/system/
+  sudo systemctl daemon-reload && sudo systemctl enable --now blog-backup.timer
+  ```
 - `/etc/blog/app.env` 를 바꾼 뒤에는 `docker compose up -d --force-recreate` 로 컨테이너를 다시 만듭니다.
 - `main` 에 커밋이 생기면 GitHub Actions(`.github/workflows/deploy.yml`)가 테스트 후 서버에서 `deploy/deploy.sh` 를 실행합니다(받기 → 빌드 → 재시작 → 응답 확인). 저장소 Secrets 에 `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_HOST`, `DEPLOY_USER` 가 필요합니다.
 
