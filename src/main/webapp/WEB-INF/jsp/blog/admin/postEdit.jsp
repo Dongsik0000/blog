@@ -81,7 +81,7 @@
                             <label class="button" for="coverFile">이미지 올리기</label>
                             <button class="button" id="coverRemove" type="button" hidden>이미지 빼기</button>
                         </div>
-                        <small>JPG, PNG, WEBP, GIF · 5MB까지</small>
+                        <small>JPG, PNG, WEBP, GIF. 가로 1600px보다 크거나 5MB를 넘으면 자동으로 줄여서 올립니다</small>
                         <div class="field">
                             <label for="postCoverAlt">이미지 설명 (대체 텍스트)</label>
                             <input id="postCoverAlt" name="coverAlt" maxlength="200" aria-describedby="postCoverAltHelp">
