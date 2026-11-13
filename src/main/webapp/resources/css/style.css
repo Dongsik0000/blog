@@ -254,9 +254,9 @@
 .series-pager-next { grid-column: 2; text-align: right; }
 
 /* 시리즈: 개발 기록 위의 카드, 시리즈 화면 */
-.series-cards { padding-block: 20px 4px; }
+.series-cards { padding-block: 20px 40px; }
 .series-cards h2 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
-.series-cards ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.series-cards ul { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr; gap: 12px; }
 .series-cards a { display: grid; gap: 6px; height: 100%; padding: 16px; border: 1px solid var(--color-border); border-radius: 16px; }
 .series-cards a:hover { border-color: var(--color-primary); }
 .series-cards strong { font-size: 16px; letter-spacing: -.3px; }

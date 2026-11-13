@@ -22,6 +22,9 @@
                     </ul>
                 </section>
             </c:if>
+            <c:if test="${selectedCategory eq 'development' and empty seriesCards}"><p class="feed-empty">아직 발행된 시리즈가 없습니다.</p></c:if>
+            <%-- 개발 기록은 시리즈 카드만 보이고, 글은 시리즈 화면에서 장별로 본다 --%>
+            <c:if test="${selectedCategory ne 'development'}">
             <div class="feed-caption"><span>글 모음</span><span>최신 글부터</span></div>
             <t:postList items="${posts}" category="${selectedCategory}"/>
             <c:if test="${totalPages > 1}">
@@ -42,6 +45,7 @@
                         <c:otherwise><span></span></c:otherwise>
                     </c:choose>
                 </nav>
+            </c:if>
             </c:if>
         </section>
         <t:blogSidebar categories="false"/>
