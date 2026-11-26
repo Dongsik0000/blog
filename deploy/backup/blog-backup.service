@@ -1,4 +1,4 @@
-# /etc/systemd/system/blog-backup.service — deploy/blog-backup.timer 가 매일 실행한다
+# /etc/systemd/system/blog-backup.service — deploy/backup/blog-backup.timer 가 매일 실행한다
 [Unit]
 Description=blog PostgreSQL and uploads backup
 

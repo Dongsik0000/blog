@@ -6,3 +6,6 @@
 .env
 .env.*
 !.env.example
+
+# 서버 비밀값 (deploy/app.env, deploy/preview.env)
+*.env

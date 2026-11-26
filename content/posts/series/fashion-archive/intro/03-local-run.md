@@ -97,7 +97,7 @@ mvn -q package -DskipTests
 ENV CATALINA_OPTS="-Dtomcat.address=0.0.0.0"
 ```
 
-`docker-compose.yml`은 서버용 설정(호스트 네트워크, `/etc/fashion-archive/app.env`)이라 그대로 쓰지 않고, 이미지만 빌드해 포트를 연결해 실행합니다. Dockerfile은 미리 빌드한 `target/fashion-archive.war`를 복사하므로 3단계를 먼저 합니다.
+`docker-compose.yml`은 서버용 설정(호스트 네트워크, `deploy/app.env`)이라 그대로 쓰지 않고, 이미지만 빌드해 포트를 연결해 실행합니다. Dockerfile은 미리 빌드한 `target/fashion-archive.war`를 복사하므로 3단계를 먼저 합니다.
 
 ## 정리
 

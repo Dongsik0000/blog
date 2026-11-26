@@ -29,7 +29,7 @@ services:
     container_name: myapp
     network_mode: host
     env_file:
-      - /etc/myapp/app.env
+      - deploy/app.env
     environment:
       CATALINA_OPTS: -Dtomcat.address=127.0.0.1
     volumes:
@@ -84,9 +84,11 @@ sudo ss -ltnp | grep java
 [::ffff:127.0.0.1]:8080  ... "java"
 ```
 
-## env_file: 비밀값은 저장소 밖에
+## env_file: 비밀값은 커밋하지 않는 파일에
 
-DB 비밀번호, API 키 같은 비밀값은 git 저장소에 넣으면 안 됩니다. 비밀값은 **서버의** `/etc/myapp/app.env`에만 두고, compose가 실행할 때 읽어 들입니다. 저장소에는 값을 비운 예시 파일(`deploy/app.env.example`)만 둡니다.
+DB 비밀번호, API 키 같은 비밀값은 git 저장소에 넣으면 안 됩니다. 비밀값은 **서버의** 앱 폴더에 있는 `deploy/app.env`에만 두고, compose가 실행할 때 읽어 들입니다. 이 파일은 `.gitignore`로 커밋에서 빼고, 저장소에는 값을 비운 예시 파일(`deploy/app.env.example`)만 올립니다.
+
+`env_file`의 상대 경로는 명령을 실행한 위치가 아니라 `docker-compose.yml`이 있는 폴더를 기준으로 풀립니다([Docker 문서](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/)).
 
 `deploy/app.env.example`
 
@@ -96,17 +98,18 @@ DB_USER=myapp_user
 DB_PASSWORD=
 ```
 
-서버에 실제 파일을 만드는 순서는 다음과 같습니다.
+서버의 앱 폴더에서 실제 파일을 만드는 순서는 다음과 같습니다. 커밋에서 빼는 설정을 먼저 넣고 확인한 뒤에 비밀값을 채웁니다.
 
 ```bash
-sudo mkdir -p /etc/myapp
-sudo cp deploy/app.env.example /etc/myapp/app.env
-sudo nano /etc/myapp/app.env                     # 값 채우기
-sudo chown root:docker /etc/myapp/app.env
-sudo chmod 640 /etc/myapp/app.env                # root 쓰기, docker 그룹 읽기
+echo 'app.env' >> .gitignore                     # 처음 한 번. 모든 폴더의 app.env를 커밋에서 뺌
+git check-ignore -v deploy/app.env               # .gitignore 규칙이 출력되면 정상
+install -m 600 deploy/app.env.example deploy/app.env
+nano deploy/app.env                              # 값 채우기
 ```
 
-권한의 의미는 [권한 글](/posts/oracle-cloud-linux-users-permissions)에서 설명했습니다. 앱에서는 `System.getenv("DB_PASSWORD")`처럼 환경 변수로 읽습니다.
+`install -m 600`은 예시를 복사하면서 소유자만 읽고 쓰게 합니다. 이미 파일이 있으면 덮어쓰므로 두 번째부터는 `nano`로 고치기만 합니다. 권한의 의미는 [권한 글](/posts/oracle-cloud-linux-users-permissions)에서 설명했습니다.
+
+파일을 `/etc` 아래에 root 소유로 둘 수도 있습니다. 하지만 `docker compose`를 실행하는 사용자는 `docker` 그룹에 속해 있고, `docker` 그룹은 root 수준의 권한을 줍니다([Docker 문서](https://docs.docker.com/engine/install/linux-postinstall/)). 따라서 root 소유로 옮겨도 이 사용자에 대한 보호 효과는 크지 않고, 값을 바꿀 때마다 `sudo`가 필요해집니다. 앱 폴더에 두었을 때 주의할 점은 하나입니다. 폴더를 통째로 복사하거나 압축해 넘기면 이 파일도 함께 나가므로, 밖으로 보낼 때는 `deploy/app.env`를 뺍니다. 앱에서는 `System.getenv("DB_PASSWORD")`처럼 환경 변수로 읽습니다.
 
 env 파일을 고친 뒤에는 `docker compose restart`로는 반영되지 않습니다. 컨테이너를 새로 만들어야 하므로 `docker compose up -d`를 실행합니다.
 
@@ -139,5 +142,5 @@ docker compose ls                # 서버의 모든 compose 프로젝트
 - compose는 컨테이너 실행 옵션을 `docker-compose.yml`에 적어 두고 `docker compose up -d`로 실행합니다.
 - `network_mode: host`로 서버의 PostgreSQL에 `127.0.0.1`로 접속하고, 대신 포트 충돌은 직접 관리합니다.
 - `CATALINA_OPTS`로 서버에서만 Tomcat을 `127.0.0.1`에 엽니다.
-- 비밀값은 `env_file`로 서버의 파일에서 읽고, 저장소에는 예시만 둡니다.
+- 비밀값은 `env_file`로 서버의 `deploy/app.env`에서 읽고, 이 파일은 `.gitignore`로 커밋에서 뺍니다. 저장소에는 예시만 올립니다.
 - 지워지면 안 되는 파일은 볼륨으로 서버 폴더에 연결합니다.

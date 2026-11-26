@@ -58,7 +58,7 @@ git clone https://github.com/<계정>/<저장소>.git /srv/myapp
 
 공개 저장소라면 위 주소 그대로 받을 수 있습니다. 비공개 저장소라면 서버가 GitHub에서 읽을 수 있도록 **저장소 전용 읽기 키**(GitHub의 Deploy keys, 읽기 전용)를 등록하고 SSH 주소(`git@github.com:...`)로 clone합니다.
 
-그다음 [비밀값 파일](/posts/oracle-cloud-docker-compose)(`/etc/myapp/app.env`)을 만들고, `docker compose up -d --build`로 한 번 직접 띄워 앱이 정상으로 뜨는지 확인합니다. 손으로 한 번 성공한 뒤에 자동화합니다.
+그다음 [비밀값 파일](/posts/oracle-cloud-docker-compose)(`deploy/app.env`, 커밋 제외)을 만들고, `docker compose up -d --build`로 한 번 직접 띄워 앱이 정상으로 뜨는지 확인합니다. 손으로 한 번 성공한 뒤에 자동화합니다.
 
 ## 서버에서 코드를 직접 고치지 않습니다
 
@@ -70,7 +70,7 @@ git clone https://github.com/<계정>/<저장소>.git /srv/myapp
 
 | 대상 | 이유 |
 |---|---|
-| 비밀값 파일 (`/etc/myapp/app.env`) | 저장소에 넣으면 안 됨 |
+| 비밀값 파일 (`deploy/app.env`) | 저장소에 넣으면 안 됨. 앱 폴더에 두되 `.gitignore`로 빼고, `git pull`은 추적하지 않는 이 파일을 건드리지 않음 |
 | nginx 설정 | 서버 전체가 함께 쓰는 설정. 저장소에 사본을 두되 적용은 [안전한 절차](/posts/oracle-cloud-nginx-apply-safely)로 직접 |
 | 데이터베이스 구조 변경 (마이그레이션 SQL) | 데이터를 바꾸는 작업이라 [백업](/posts/oracle-cloud-postgresql-backup-restore) 후 직접 실행 |
 

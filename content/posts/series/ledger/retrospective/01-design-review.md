@@ -36,7 +36,7 @@ Ledger는 구글 시트에서 쓰던 가계부를 웹으로 옮기며 이월, �
 
 앱은 WAR로 묶어 Tomcat에서 실행하고, Docker와 nginx로 서버에 연결합니다. 배포 스크립트와 GitHub Actions는 코드 갱신과 실행을 연결하고, 백업 타이머는 거래가 저장된 DB를 정기적으로 백업합니다.
 
-서버별 DB 비밀번호와 API 키는 저장소 밖의 `/etc/ledger/app.env`에 둡니다. 따라서 완성된 코드를 실행하는 독자에게도 환경 파일 생성과 값 입력은 필요한 단계입니다. 이 준비 과정을 [배포 장](/posts/ledger-deploy-deploy-flow)에 명시했습니다.
+서버별 DB 비밀번호와 API 키는 `.gitignore`로 커밋에서 빠지는 `deploy/app.env`에 둡니다. 따라서 완성된 코드를 실행하는 독자에게도 환경 파일 생성과 값 입력은 필요한 단계입니다. 이 준비 과정을 [배포 장](/posts/ledger-deploy-deploy-flow)에 명시했습니다.
 
 ## 이 프로젝트를 읽는 순서
 

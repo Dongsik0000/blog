@@ -3,20 +3,20 @@ title: "nginx로 /p1/을 연결하고 사진을 직접 보내기"
 slug: "fashion-archive-deploy-nginx"
 category: "development"
 publishedAt: "2026-10-08"
-summary: "저장소의 deploy/nginx-fashion-archive.conf를 읽으며 /p1을 /p1/로 보내는 설정, 경로를 바꾸지 않는 proxy_pass와 전달 헤더, 업로드 크기에 맞춘 client_max_body_size, /uploads/를 Tomcat 없이 디스크에서 바로 보내는 alias와 nosniff, 캐시 설정을 설명합니다."
+summary: "저장소의 deploy/nginx/fashion-archive.conf를 읽으며 /p1을 /p1/로 보내는 설정, 경로를 바꾸지 않는 proxy_pass와 전달 헤더, 업로드 크기에 맞춘 client_max_body_size, /uploads/를 Tomcat 없이 디스크에서 바로 보내는 alias와 nosniff, 캐시 설정을 설명합니다."
 series: "fashion-archive"
 chapter: "deploy"
 seriesOrder: 3
 ---
 ## 이 글에서 할 일
 
-외부 요청은 Tomcat이 아니라 nginx가 받습니다. nginx는 `/p1/` 요청을 Tomcat으로 넘기고, `/uploads/` 사진 요청은 Tomcat을 거치지 않고 디스크에서 직접 보냅니다. 설정 원본은 저장소의 `deploy/nginx-fashion-archive.conf`이고, 서버의 nginx 사이트 설정(443 server 블록)에 넣어 씁니다.
+외부 요청은 Tomcat이 아니라 nginx가 받습니다. nginx는 `/p1/` 요청을 Tomcat으로 넘기고, `/uploads/` 사진 요청은 Tomcat을 거치지 않고 디스크에서 직접 보냅니다. 설정 원본은 저장소의 `deploy/nginx/fashion-archive.conf`이고, 서버의 nginx 사이트 설정(443 server 블록)에 넣어 씁니다.
 
 nginx 자체의 설치와 HTTPS, 설정 적용 절차는 [Oracle Cloud 시리즈의 nginx 장](/posts/oracle-cloud-nginx-what-is-nginx)에 있습니다.
 
 ## 전체
 
-`deploy/nginx-fashion-archive.conf`
+`deploy/nginx/fashion-archive.conf`
 
 ```nginx
 location = /p1 {

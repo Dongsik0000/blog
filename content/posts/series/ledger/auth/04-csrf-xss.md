@@ -82,7 +82,7 @@ nginx 헤더는 [Oracle Cloud 시리즈의 보안 헤더 글](/posts/oracle-clou
 | 내부 정보 노출 | 공통 오류 화면, 일반적인 오류 문장 | [예외 처리](/posts/ledger-spring-exception-handling) |
 | 스프레드시트 수식 주입 | CSV 셀 앞에 `'` | [CSV 수식 주입](/posts/ledger-auth-csv-injection) |
 | XXE (XML 외부 개체) | 공휴일 XML 해석 시 외부 개체 차단 | [공휴일 API](/posts/ledger-external-api-holiday-api) |
-| 비밀값 유출 | 저장소 밖 `app.env`, 운영 로그 INFO | [설정값과 환경 변수](/posts/ledger-spring-properties) |
+| 비밀값 유출 | 커밋 제외된 `deploy/app.env`, 운영 로그 INFO | [설정값과 환경 변수](/posts/ledger-spring-properties) |
 
 ## 정리
 

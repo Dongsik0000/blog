@@ -5,7 +5,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!-- globals.properties 의 값은 ${ENV_VAR:기본값} 형태로 환경변수를 참조한다 (서버: /etc/blog/app.env) -->
+    <!-- globals.properties 의 값은 ${ENV_VAR:기본값} 형태로 환경변수를 참조한다 (서버: deploy/app.env) -->
     <context:property-placeholder location="classpath:/egovProps/globals.properties"/>
 
     <bean id="dataSource-postgresql" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">

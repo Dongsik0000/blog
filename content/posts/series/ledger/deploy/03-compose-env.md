@@ -10,7 +10,7 @@ seriesOrder: 3
 ---
 ## 이 글에서 할 일
 
-서버에 **`/etc/ledger/app.env`를 만든 뒤** 완성된 Ledger를 Docker Compose로 실행합니다. 예시 파일은 저장소에 있지만 서버별 비밀번호와 키는 직접 입력해야 합니다. 앱 코드를 수정하는 단계가 아니라 실행 환경을 준비하는 단계입니다.
+서버의 저장소에 **`deploy/app.env`를 만든 뒤** 완성된 Ledger를 Docker Compose로 실행합니다. 예시 파일은 저장소에 있지만 서버별 비밀번호와 키는 직접 입력해야 합니다. 앱 코드를 수정하는 단계가 아니라 실행 환경을 준비하는 단계입니다.
 
 이 글은 호스트 PostgreSQL에 `ledger` DB와 `ledger_app` 계정이 준비되어 있고, `db/000`부터 `009`까지 적용한 Linux 서버를 기준으로 합니다. 저장소는 `/srv/devgear/ledger`에 있으며 Docker Compose를 사용할 수 있어야 합니다.
 
@@ -20,12 +20,15 @@ seriesOrder: 3
 
 ```bash
 cd /srv/devgear/ledger
-sudo install -d -m 700 -o root -g root /etc/ledger
-sudo install -m 600 -o root -g root deploy/app.env.example /etc/ledger/app.env
-sudoedit /etc/ledger/app.env
+install -m 600 deploy/app.env.example deploy/app.env
+nano deploy/app.env
 ```
 
-`700`은 디렉터리를 root만 사용할 수 있게 하고, `600`은 파일을 root만 읽고 쓸 수 있게 합니다. **기존 `app.env`가 있다면 복사 명령을 다시 실행하지 않습니다.** 기존 값을 덮어쓰므로 `sudoedit`로 필요한 항목만 수정합니다.
+`600`은 파일을 소유자인 배포 계정만 읽고 쓸 수 있게 합니다. **기존 `app.env`가 있다면 복사 명령을 다시 실행하지 않습니다.** 기존 값을 덮어쓰므로 편집기로 필요한 항목만 수정합니다.
+
+이 파일은 저장소 폴더 안에 있지만 `.gitignore`에 `app.env`가 등록되어 있어 커밋되지 않습니다. `git status`에 `deploy/app.env`가 보이지 않으면 정상입니다. 배포 스크립트는 `git pull --ff-only`로 코드만 받으므로 Git이 추적하지 않는 이 파일은 배포 후에도 그대로 남습니다.
+
+파일을 `/etc` 아래에 root 소유로 둘 수도 있지만, 이 서버의 배포 계정은 `docker` 그룹에 속해 있습니다. [Docker 문서](https://docs.docker.com/engine/install/linux-postinstall/)에 따르면 `docker` 그룹은 root 수준의 권한을 줍니다. 따라서 root 소유로 옮겨도 이 계정에 대한 보호 효과는 크지 않고, 값을 바꿀 때마다 `sudo`가 필요해집니다. 대신 저장소 폴더를 통째로 복사하거나 압축해 넘길 때 이 파일이 함께 나가지 않도록 `deploy/app.env`를 빼고 보냅니다.
 
 `deploy/app.env.example` (저장소의 원본 예시)
 
@@ -68,14 +71,14 @@ services:
     container_name: ledger
     network_mode: host
     env_file:
-      - /etc/ledger/app.env
+      - deploy/app.env
     environment:
       CATALINA_OPTS: -Dtomcat.address=127.0.0.1
     mem_limit: 768m
     restart: unless-stopped
 ```
 
-Compose가 `env_file`을 읽고 값을 컨테이너의 환경 변수로 넣습니다. Spring은 그 환경 변수를 `globals.properties`의 `${환경변수:기본값}`에서 읽습니다. 서버에 파일을 만든 다음 앱을 실행해야 이 연결이 완성됩니다.
+Compose가 `env_file`을 읽고 값을 컨테이너의 환경 변수로 넣습니다. `env_file`의 상대 경로는 명령을 실행한 위치가 아니라 `docker-compose.yml`이 있는 폴더를 기준으로 풀리므로, 저장소의 `deploy/app.env`를 가리킵니다. Spring은 그 환경 변수를 `globals.properties`의 `${환경변수:기본값}`에서 읽습니다. 서버에 파일을 만든 다음 앱을 실행해야 이 연결이 완성됩니다.
 
 `network_mode: host`는 컨테이너가 호스트의 네트워크를 함께 사용하는 설정입니다. 따라서 앱의 `127.0.0.1:5432`는 이 구성에서 호스트 PostgreSQL에 연결됩니다. `CATALINA_OPTS`는 Tomcat을 서버 내부 주소인 `127.0.0.1:8081`에 바인딩합니다.
 
@@ -83,11 +86,11 @@ Compose가 `env_file`을 읽고 값을 컨테이너의 환경 변수로 넣습�
 
 ## 3단계. 구성 검사와 실행
 
-같은 저장소 루트에서 실행합니다. root 소유 환경 파일을 읽으므로 `sudo`로 실행합니다.
+같은 저장소 루트에서 배포 계정으로 실행합니다. 환경 파일이 배포 계정 소유이고 이 계정이 `docker` 그룹에 속하므로 `sudo`가 필요하지 않습니다.
 
 ```bash
-sudo docker compose config --quiet
-sudo docker compose up -d --build
+docker compose config --quiet
+docker compose up -d --build
 ```
 
 첫 명령은 설정이 유효한지 검사하며 정상일 때 내용을 출력하지 않습니다. 오류가 나면 실행하지 않고 파일 경로와 형식을 먼저 확인합니다. `--quiet` 없이 설정 전체를 출력하면 환경 변수 값도 노출될 수 있으므로 공유용 로그에 남기지 않습니다.
@@ -99,8 +102,8 @@ sudo docker compose up -d --build
 서버의 저장소 루트에서 실행합니다.
 
 ```bash
-sudo docker compose ps
-sudo docker compose logs --tail=100 app
+docker compose ps
+docker compose logs --tail=100 app
 curl -I http://127.0.0.1:8081/p3/manifest.json
 ```
 
@@ -113,13 +116,13 @@ curl -I http://127.0.0.1:8081/p3/manifest.json
 `app.env`를 수정한 뒤에는 같은 위치에서 컨테이너를 다시 만듭니다.
 
 ```bash
-sudo docker compose up -d --force-recreate
+docker compose up -d --force-recreate
 ```
 
 새 컨테이너가 수정한 환경 변수를 받습니다. 실행 중인 컨테이너의 환경 변수는 파일을 저장하는 것만으로 바뀌지 않습니다. 실행 옵션은 [Docker Compose up 문서](https://docs.docker.com/reference/cli/docker/compose/up/), 설정 검사는 [config 문서](https://docs.docker.com/reference/cli/docker/compose/config/)에서 확인했습니다(2026-10-07).
 
 ## 정리
 
-- 처음 설치할 때 예시를 `/etc/ledger/app.env`로 복사하고 실제 값을 입력합니다.
+- 처음 설치할 때 예시를 `deploy/app.env`로 복사하고 실제 값을 입력합니다. 이 파일은 `.gitignore`로 커밋에서 빠집니다.
 - Compose가 환경 파일을 읽고, Spring이 컨테이너 환경 변수에서 값을 받습니다.
 - 앱 상태, 내부 HTTP 응답, 외부 로그인과 DB 조회를 차례로 확인합니다.

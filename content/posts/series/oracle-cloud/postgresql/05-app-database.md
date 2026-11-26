@@ -112,7 +112,7 @@ sudo -u postgres psql -d myapp -Atc "select has_schema_privilege('myapp_user','p
 ## 비밀번호 관리
 
 - 비밀번호는 SQL 파일에 적어 저장소에 올리지 않습니다. 저장소에는 `'<비밀번호>'`처럼 자리만 남깁니다.
-- 앱은 서버의 비밀값 파일(예: `/etc/myapp/app.env`)에서 비밀번호를 읽습니다([compose 글](/posts/oracle-cloud-docker-compose) 참고).
+- 앱은 서버의 비밀값 파일(예: 앱 폴더의 `deploy/app.env`)에서 비밀번호를 읽습니다([compose 글](/posts/oracle-cloud-docker-compose) 참고).
 - 비밀번호를 바꿀 때는 `ALTER ROLE myapp_user PASSWORD '<새 비밀번호>';` 후 비밀값 파일도 함께 고치고 앱을 다시 띄웁니다.
 - 슈퍼유저 권한을 가진 관리용 계정은 앱 설정에 두지 않고, 꼭 필요할 때만 씁니다.
 

@@ -82,7 +82,7 @@ Globals.Ledger.SignupCode=${LEDGER_SIGNUP_CODE:dev-signup}
 
 DB 비밀번호가 개발 기본값과 같다면 별도 환경 변수 없이 기본 가계부 기능을 실행할 수 있습니다. 비밀번호를 바꾸거나 API 기능을 사용한다면 **Tomcat 실행 구성의 Environment variables**에 해당 값을 넣습니다. 파일을 프로젝트 폴더에 두는 것만으로 IntelliJ나 Spring이 자동으로 읽지는 않습니다.
 
-서버의 Docker 실행은 `/etc/ledger/app.env` 파일을 별도로 만들어야 합니다. 로컬 IntelliJ 실행과 주입 방식이 다르며, [서버 실행 글](/posts/ledger-deploy-compose-env)에서 생성과 입력 순서를 다룹니다.
+서버의 Docker 실행은 `deploy/app.env` 파일을 별도로 만들어야 합니다. 로컬 IntelliJ 실행과 주입 방식이 다르며, [서버 실행 글](/posts/ledger-deploy-compose-env)에서 생성과 입력 순서를 다룹니다.
 
 ## 4단계. IntelliJ에 Tomcat 등록 (PC당 한 번)
 
@@ -128,5 +128,5 @@ IntelliJ 메뉴와 기능은 설치 버전에 따라 다를 수 있습니다. �
 - JDK 17, PostgreSQL 16, Tomcat 10.1과 Tomcat 연동이 가능한 IntelliJ를 준비합니다.
 - `db/`의 SQL을 번호 순서대로 실행합니다.
 - DB 계정과 연결 비밀번호를 맞추고, API 키는 실행 구성의 환경 변수로 넣습니다.
-- Docker로 서버에 띄울 때는 별도로 `/etc/ledger/app.env`를 만듭니다.
+- Docker로 서버에 띄울 때는 별도로 `deploy/app.env`를 만듭니다.
 - IntelliJ에서 context `/p3`, 포트 8081로 띄워 서버와 경로를 맞춥니다.

@@ -10,7 +10,7 @@ seriesOrder: 11
 ---
 ## 이 글에서 할 일
 
-DB 비밀번호나 API 키는 내 PC와 서버에서 값이 다르고, 저장소에 올리면 안 됩니다. Ledger는 설정 파일 하나로 두 환경을 모두 다루면서 비밀값은 저장소 밖에 둡니다. 그 방법을 봅니다.
+DB 비밀번호나 API 키는 내 PC와 서버에서 값이 다르고, 저장소에 올리면 안 됩니다. Ledger는 설정 파일 하나로 두 환경을 모두 다루면서 비밀값은 Git이 추적하지 않는 파일에 둡니다. 그 방법을 봅니다.
 
 ## 설정 파일
 
@@ -18,7 +18,7 @@ DB 비밀번호나 API 키는 내 PC와 서버에서 값이 다르고, 저장소
 
 ```properties
 # 값은 환경변수를 우선하고, 없으면 콜론 뒤 기본값(로컬 개발용)을 쓴다.
-# 서버에서는 /etc/ledger/app.env 로 주입한다. 비밀값을 이 파일에 직접 쓰지 않는다.
+# 서버에서는 deploy/app.env 로 주입한다. 비밀값을 이 파일에 직접 쓰지 않는다.
 
 Globals.Ledger.Postgre.Url=${LEDGER_DB_URL:jdbc:postgresql://localhost:5432/ledger}
 Globals.Ledger.Postgre.UserName=${LEDGER_DB_USER:ledger_app}
@@ -86,7 +86,7 @@ private String signupCode;
 
 ```yaml
     env_file:
-      - /etc/ledger/app.env
+      - deploy/app.env
 ```
 
 저장소에는 값이 빈 예시만 있습니다.
@@ -103,19 +103,18 @@ LEDGER_MARKET_API_KEY=
 LEDGER_MARKET_REALTIME=false
 ```
 
-**서버에서는 `/etc/ledger/app.env`를 직접 만들어야 합니다.** 예시 파일은 값의 이름을 제공할 뿐이며, Git에서 내려받거나 이미지를 빌드해도 운영 환경 파일이 만들어지지는 않습니다.
+**서버에서는 `deploy/app.env`를 직접 만들어야 합니다.** 예시 파일은 값의 이름을 제공할 뿐이며, Git에서 내려받거나 이미지를 빌드해도 운영 환경 파일이 만들어지지는 않습니다.
 
 처음 설치하는 서버의 Ledger 저장소 루트에서 실행합니다.
 
 ```bash
-sudo install -d -m 700 -o root -g root /etc/ledger
-sudo install -m 600 -o root -g root deploy/app.env.example /etc/ledger/app.env
-sudoedit /etc/ledger/app.env
+install -m 600 deploy/app.env.example deploy/app.env
+nano deploy/app.env
 ```
 
-두 번째 명령은 파일을 덮어쓰므로, 기존 운영 파일이 있는 서버에서는 복사하지 않고 `sudoedit`로 필요한 값만 수정합니다. DB 비밀번호를 DB 계정의 실제 값과 맞추고, 가입을 허용하려면 초대 코드를 넣습니다. API 키는 사용할 기능에 맞춰 입력합니다.
+첫 번째 명령은 파일을 덮어쓰므로, 기존 운영 파일이 있는 서버에서는 복사하지 않고 편집기로 필요한 값만 수정합니다. DB 비밀번호를 DB 계정의 실제 값과 맞추고, 가입을 허용하려면 초대 코드를 넣습니다. API 키는 사용할 기능에 맞춰 입력합니다.
 
-저장소의 `.gitignore`에도 `app.env`가 등록되어 있습니다. 운영 파일은 저장소 밖에 두고, 비밀값을 Git에 추가하지 않습니다. 각 변수와 컨테이너 실행·확인 절차는 [Compose와 app.env 글](/posts/ledger-deploy-compose-env)에서 이어집니다.
+`deploy/app.env`는 저장소 폴더 안에 있지만 `.gitignore`에 `app.env`가 등록되어 있어 Git이 추적하지 않습니다. 커밋 전에 `git status`에 이 파일이 보이지 않는지 확인합니다. 각 변수와 컨테이너 실행·확인 절차는 [Compose와 app.env 글](/posts/ledger-deploy-compose-env)에서 이어집니다.
 
 이 파일은 **Compose가 읽어 컨테이너 환경 변수로 주입**합니다. Spring이 `app.env`를 직접 읽는 구조는 아닙니다. `env_file`의 역할은 [Docker 공식 문서](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/)에서 확인했습니다(2026-10-07).
 
@@ -149,5 +148,5 @@ ENV LEDGER_LOG_LEVEL=INFO \
 
 - `globals.properties`는 `${환경변수:로컬 기본값}` 형식으로 로컬과 서버를 한 파일에서 다룹니다.
 - XML은 `property-placeholder` + `${...}`, Java는 `@Value`로 값을 꺼냅니다.
-- 서버는 compose의 `env_file`로 서버의 `app.env`를 읽고, 저장소에는 값이 빈 예시만 둡니다.
+- 서버는 compose의 `env_file`로 `deploy/app.env`를 읽습니다. 이 파일은 `.gitignore`로 커밋에서 빠지고, 저장소에는 값이 빈 예시만 올라갑니다.
 - 설정이 비면 기능을 끄는 쪽(가입 불가, API 기능 비활성)으로 안전하게 동작합니다.

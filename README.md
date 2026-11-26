@@ -57,7 +57,7 @@ PC 와 휴대폰 브라우저에서 같은 화면으로 읽고 씁니다.
 - 화면에는 사용자 입력을 글자로만 넣고, 글의 Markdown 에 섞인 HTML 은 버려 XSS 를 막습니다
 - 업로드는 파일 앞부분으로 형식을 확인해 JPG · PNG · WEBP · GIF 만 5MB 까지 받습니다 (SVG 제외)
 - 방문자에게는 세션을 만들지 않습니다. Tomcat 과 DB 는 서버 내부에만 열고, 외부 요청은 nginx 만 받습니다
-- 비밀값은 저장소에 두지 않고 서버의 `/etc/blog/app.env` 로만 넣습니다
+- 비밀값은 서버의 `deploy/app.env` 에만 넣습니다 (`.gitignore` 로 커밋 제외)
 
 **정확하게**
 - 글 해석 · 입력 검증 · 요청 횟수 제한을 JUnit 으로 검증하고, `content/` 의 모든 글을 배포 전에 해석해 봅니다
@@ -100,10 +100,10 @@ psql -U blog_app -d blog_preview -f db/002_series.sql
 mvn clean package -Psample
 docker build -t blog:preview .
 # 운영 비밀값을 복사해 DB 주소만 blog_preview 로 바꾼다 (처음 한 번)
-sudo sh -c 'sed "s#/blog\$#/blog_preview#" /etc/blog/app.env > /etc/blog/preview.env && chown root:docker /etc/blog/preview.env && chmod 640 /etc/blog/preview.env'
+(umask 077; sed 's#/blog$#/blog_preview#' deploy/app.env > deploy/preview.env)
 docker run -d --name blog-preview --network host \
   -e CATALINA_OPTS="-Dtomcat.address=127.0.0.1 -Dtomcat.port=18082" \
-  --env-file /etc/blog/preview.env blog:preview
+  --env-file deploy/preview.env blog:preview
 # http://127.0.0.1:18082/blog/ 확인 후
 docker rm -f blog-preview
 mvn clean package   # 운영 배포 전에는 샘플 없이 다시 빌드
@@ -118,22 +118,22 @@ mvn clean package   # 운영 배포 전에는 샘플 없이 다시 빌드
 sudo -u postgres psql -f db/000_create_db.sql
 psql -h 127.0.0.1 -U blog_app -d blog -f db/001_schema.sql
 psql -h 127.0.0.1 -U blog_app -d blog -f db/002_series.sql
-sudo install -D -m 640 -o root -g docker deploy/app.env.example /etc/blog/app.env   # 값 입력
+install -m 600 deploy/app.env.example deploy/app.env   # 값 입력
 mvn clean package            # 테스트 포함. 실패하면 WAR 가 만들어지지 않는다
 docker compose up -d --build
 ```
 
 - 컨테이너는 호스트 PostgreSQL 에 붙기 위해 host 네트워크를 쓰고, Tomcat 은 `127.0.0.1:8082` 에만 열립니다.
-- nginx 설정은 `deploy/nginx-blog.conf` 파일 머리말을 따릅니다. 이미지 업로드를 위해 요청 크기를 6MB 까지 받습니다.
+- nginx 설정은 `deploy/nginx/blog.conf` 파일 머리말을 따릅니다. 이미지 업로드를 위해 요청 크기를 6MB 까지 받습니다.
 - 업로드한 이미지는 호스트 `/var/lib/blog/uploads` 에 남습니다. DB 와 함께 백업 대상입니다.
 - 백업: 매일 04:20 에 DB 덤프와 업로드 폴더 압축을 `/var/backups/blog` 에 30일 보관합니다. 글은 처음 한 번만 md 에서 가져오고 이후 수정은 DB 에만 있으므로, DB 백업이 글의 원본입니다.
 
   ```bash
-  sudo install -m 750 deploy/backup.sh /usr/local/bin/blog-backup
-  sudo install -m 644 deploy/blog-backup.service deploy/blog-backup.timer /etc/systemd/system/
+  sudo install -m 750 deploy/backup/backup.sh /usr/local/bin/blog-backup
+  sudo install -m 644 deploy/backup/blog-backup.service deploy/backup/blog-backup.timer /etc/systemd/system/
   sudo systemctl daemon-reload && sudo systemctl enable --now blog-backup.timer
   ```
-- `/etc/blog/app.env` 를 바꾼 뒤에는 `docker compose up -d --force-recreate` 로 컨테이너를 다시 만듭니다.
+- `deploy/app.env` 를 바꾼 뒤에는 `docker compose up -d --force-recreate` 로 컨테이너를 다시 만듭니다.
 - `main` 에 커밋이 생기면 GitHub Actions(`.github/workflows/deploy.yml`)가 테스트 후 서버에서 `deploy/deploy.sh` 를 실행합니다(받기 → 빌드 → 재시작 → 응답 확인). 저장소 Secrets 에 `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_HOST`, `DEPLOY_USER` 가 필요합니다.
 
 </details>

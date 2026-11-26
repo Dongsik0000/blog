@@ -69,7 +69,7 @@ GitHub의 임시 실행 환경에 SSH 연결용 파일을 만들고 서버의 `d
 
 개인 키를 저장소에 넣지 않습니다. 공개 키는 서버 접속 계정의 `authorized_keys`에 등록하고, 서버 호스트 키는 지문을 확인한 값을 사용합니다. 키 생성과 서버 등록 절차는 [배포 전용 키 글](/posts/oracle-cloud-deploy-deploy-key), 호스트 키 확인은 [GitHub Actions 글](/posts/oracle-cloud-deploy-github-actions)에서 다룹니다.
 
-서버의 강제 명령을 설정한다면 Ledger의 실제 명령인 `bash /srv/devgear/ledger/deploy/deploy.sh`를 지정합니다. 접속 계정은 저장소를 갱신하고 `docker` 명령을 실행할 수 있어야 하며, Compose가 root 소유 `app.env`를 읽을 권한도 필요합니다. 스크립트는 `sudo`를 붙이지 않으므로 서버의 접속 계정 권한과 맞춰 준비합니다.
+서버의 강제 명령을 설정한다면 Ledger의 실제 명령인 `bash /srv/devgear/ledger/deploy/deploy.sh`를 지정합니다. 접속 계정은 저장소를 갱신하고 `docker` 명령을 실행할 수 있어야 하며, Compose가 `deploy/app.env`를 읽을 수 있도록 이 파일의 소유자여야 합니다. 스크립트는 `sudo`를 붙이지 않으므로 서버의 접속 계정 권한과 맞춰 준비합니다.
 
 ## 2단계. 서버 배포 스크립트 읽기
 
@@ -121,7 +121,7 @@ main() {
 |---|---|
 | `Permission denied (publickey)` | 등록한 공개 키와 Secret의 개인 키가 대응하는지 |
 | `Host key verification failed` | 주소와 `DEPLOY_KNOWN_HOSTS`의 호스트 키 |
-| 환경 파일 읽기 권한 오류 | SSH 접속 계정과 `/etc/ledger/app.env`의 접근 권한 |
+| 환경 파일 읽기 권한 오류 | SSH 접속 계정과 `deploy/app.env`의 접근 권한 |
 | `git pull` 실패 | 서버 저장소의 브랜치·원격 연결·로컬 변경 |
 | Docker 빌드 실패 | 오류가 난 Maven 또는 Docker 단계의 로그 |
 

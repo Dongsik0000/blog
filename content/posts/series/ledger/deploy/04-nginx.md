@@ -20,8 +20,8 @@ Docker로 실행한 Ledger는 서버 내부 `127.0.0.1:8081`에서 요청을 받
 
 ```bash
 sudo install -d /etc/nginx/snippets
-sudo install -m 644 deploy/nginx-ledger-limit.conf /etc/nginx/conf.d/ledger-limit.conf
-sudo install -m 644 deploy/nginx-ledger.conf /etc/nginx/snippets/ledger.conf
+sudo install -m 644 deploy/nginx/ledger-limit.conf /etc/nginx/conf.d/ledger-limit.conf
+sudo install -m 644 deploy/nginx/ledger.conf /etc/nginx/snippets/ledger.conf
 sudoedit /etc/nginx/sites-available/devgear.kr
 ```
 
@@ -29,7 +29,7 @@ sudoedit /etc/nginx/sites-available/devgear.kr
 
 기존 **443 `server` 블록 안**에 다음 한 줄을 추가합니다. 이미 있다면 중복 추가하지 않습니다.
 
-`deploy/nginx-ledger.conf`의 머리말에 명시된 포함 지시문
+`deploy/nginx/ledger.conf`의 머리말에 명시된 포함 지시문
 
 ```nginx
 include /etc/nginx/snippets/ledger.conf;
@@ -39,7 +39,7 @@ include /etc/nginx/snippets/ledger.conf;
 
 ## 전달 경로 읽기
 
-`deploy/nginx-ledger.conf` (`/p3/`의 전달 부분)
+`deploy/nginx/ledger.conf` (`/p3/`의 전달 부분)
 
 ```nginx
 location /p3/ {
@@ -60,7 +60,7 @@ URI가 없는 `proxy_pass`의 전달 방식은 [nginx 공식 문서](https://ngi
 
 ## 로그인 요청 제한
 
-`deploy/nginx-ledger-limit.conf`
+`deploy/nginx/ledger-limit.conf`
 
 ```nginx
 limit_req_zone $binary_remote_addr zone=ledger_auth:1m rate=10r/m;

@@ -3,7 +3,7 @@ title: "app.env와 Docker Compose로 실행하기"
 slug: "fashion-archive-deploy-compose-env"
 category: "development"
 publishedAt: "2026-10-08"
-summary: "서버에 /etc/fashion-archive/app.env를 만들어 DB 비밀번호, 사진 공개 주소, 가입 코드를 넣고, 저장소의 Compose 구성(host 네트워크, 127.0.0.1, 업로드 볼륨, 메모리 상한)으로 실행하는 과정을 설명합니다."
+summary: "서버의 저장소에 deploy/app.env를 만들어 DB 비밀번호, 사진 공개 주소, 가입 코드를 넣고, 저장소의 Compose 구성(host 네트워크, 127.0.0.1, 업로드 볼륨, 메모리 상한)으로 실행하는 과정을 설명합니다."
 series: "fashion-archive"
 chapter: "deploy"
 seriesOrder: 2
@@ -19,11 +19,16 @@ seriesOrder: 2
 설정 키는 `globals.properties`가 참조하는 환경 변수 이름입니다([로컬 실행](/posts/fashion-archive-intro-local-run)).
 
 ```bash
-sudo install -d -m 700 /etc/fashion-archive
-sudoedit /etc/fashion-archive/app.env
+cd /srv/devgear/fashion-archive
+install -m 600 /dev/null deploy/app.env
+nano deploy/app.env
 ```
 
-`/etc/fashion-archive/app.env`에 넣을 항목
+첫 명령은 소유자인 배포 계정만 읽고 쓸 수 있는(`600`) 빈 파일을 만듭니다. 이미 파일이 있다면 내용을 비우므로 다시 실행하지 않고 편집기로 필요한 항목만 고칩니다.
+
+이 파일은 저장소 폴더 안에 있지만 `.gitignore`에 `app.env`가 등록되어 있어 커밋되지 않습니다. `git status`에 `deploy/app.env`가 보이지 않으면 정상입니다. 배포 스크립트는 `git pull --ff-only`로 코드만 받으므로 Git이 추적하지 않는 이 파일은 배포 후에도 남습니다. 저장소 폴더를 통째로 복사해 넘길 때는 이 파일을 빼고 보냅니다.
+
+`deploy/app.env`에 넣을 항목
 
 ```text
 FASHION_DB_URL=jdbc:postgresql://127.0.0.1:5432/fashion
@@ -42,7 +47,7 @@ FASHION_SIGNUP_CODE=비공개 가입 코드
 
 `FASHION_UPLOAD_DIR`은 넣지 않아도 됩니다. 기본값 `/data/fashion-uploads`가 컨테이너 안의 경로이고, 아래 볼륨으로 서버 폴더에 연결됩니다.
 
-운영 파일의 값은 저장소나 문서에 복사하지 않습니다. 가입 코드를 바꾼 뒤에는 `sudo docker compose up -d`로 컨테이너를 다시 만들어야 반영됩니다(`deploy/OPERATIONS.md`).
+운영 파일의 값은 저장소나 문서에 복사하지 않습니다. 가입 코드를 바꾼 뒤에는 `docker compose up -d`로 컨테이너를 다시 만들어야 반영됩니다(`deploy/OPERATIONS.md`).
 
 ## 2단계. 사진 폴더
 
@@ -67,7 +72,7 @@ services:
     container_name: fashion-archive
     network_mode: host
     env_file:
-      - /etc/fashion-archive/app.env
+      - deploy/app.env
     environment:
       CATALINA_OPTS: -Dtomcat.address=127.0.0.1
     volumes:
@@ -81,7 +86,7 @@ services:
 |---|---|
 | `build: context: .` | 이 폴더의 Dockerfile로 이미지를 만듦 |
 | `network_mode: host` | 컨테이너가 서버의 네트워크를 그대로 씀. `127.0.0.1:5432`가 서버의 PostgreSQL |
-| `env_file` | 1단계 파일을 환경 변수로 읽음 |
+| `env_file` | 1단계 파일을 환경 변수로 읽음. 상대 경로는 이 compose 파일이 있는 폴더 기준 |
 | `CATALINA_OPTS: -Dtomcat.address=127.0.0.1` | Dockerfile의 기본값(`0.0.0.0`)을 덮어써 Tomcat을 서버 자신에서만 열음 |
 | `volumes` | 서버 `/srv/fashion-uploads` ↔ 컨테이너 `/data/fashion-uploads` |
 | `mem_limit: 640m` | 컨테이너 메모리 상한. 힙 384MB + 힙 밖 여유 |
@@ -103,7 +108,7 @@ services:
 cd /srv/devgear/fashion-archive
 mvn test
 mvn -q package -DskipTests
-sudo docker compose up -d --build
+docker compose up -d --build
 ```
 
 Dockerfile이 `target/fashion-archive.war`를 복사하므로 `package`가 먼저입니다. 이 문서의 순서는 테스트를 먼저 따로 돌리고 `package`에서는 건너뜁니다. 자동 배포 스크립트는 `mvn -q package` 하나로 테스트와 war 생성을 함께 합니다([자동 배포](/posts/fashion-archive-deploy-deploy-actions)).
@@ -111,8 +116,8 @@ Dockerfile이 `target/fashion-archive.war`를 복사하므로 `package`가 먼�
 ## 5단계. 확인
 
 ```bash
-sudo docker compose ps
-sudo docker compose logs -f app
+docker compose ps
+docker compose logs -f app
 sudo ss -ltnp | grep ':8080 '
 ```
 
@@ -126,7 +131,7 @@ sudo ss -ltnp | grep ':8080 '
 
 ## 정리
 
-- 서버의 `/etc/fashion-archive/app.env`에 DB 접속, 사진 공개 주소, 가입 코드를 넣고 Compose의 `env_file`로 읽습니다.
+- 저장소의 `deploy/app.env`(커밋 제외)에 DB 접속, 사진 공개 주소, 가입 코드를 넣고 Compose의 `env_file`로 읽습니다.
 - 사진은 볼륨으로 서버 폴더에 남겨 컨테이너를 새로 만들어도 유지합니다.
 - 서버에서는 `CATALINA_OPTS`로 Tomcat을 `127.0.0.1`에만 열고, 메모리를 640MB로 제한합니다.
 - war를 먼저 만들고 `docker compose up -d --build`로 실행합니다.

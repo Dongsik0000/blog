@@ -41,16 +41,16 @@ uid=1001(ubuntu) gid=1001(ubuntu) groups=1001(ubuntu),4(adm),27(sudo),989(docker
 `sudo`는 "이 명령 하나만 관리자 권한으로 실행"한다는 뜻입니다. root로 계속 로그인해 있지 않고, 필요한 순간에만 권한을 빌려 씁니다. 실수로 시스템을 망가뜨릴 위험을 줄이는 방법입니다.
 
 ```bash
-cat /etc/myapp/app.env          # 실패: Permission denied
-sudo cat /etc/myapp/app.env     # 성공 (단, 비밀값이 화면에 나오므로 남이 볼 때는 실행하지 않습니다)
+ls /var/backups/myapp           # 실패: Permission denied
+sudo ls /var/backups/myapp      # 성공
 ```
 
 ## 권한 읽기
 
-`ls -l`로 보면 줄 앞에 `-rw-r-----` 같은 글자가 있습니다. 예를 들어 앱 하나를 운영하는 서버에서 다음 세 경로를 보면 이렇게 나올 수 있습니다.
+`ls -l`로 보면 줄 앞에 `drwxr-xr-x` 같은 글자가 있습니다. 예를 들어 앱 하나를 운영하는 서버에서 다음 세 경로를 보면 이렇게 나올 수 있습니다.
 
 ```bash
-sudo ls -l /etc/myapp/app.env
+ls -l /srv/myapp/deploy/app.env
 ls -ld /srv/myapp
 sudo ls -ld /var/backups/myapp
 ```
@@ -58,19 +58,19 @@ sudo ls -ld /var/backups/myapp
 실제 출력에는 날짜와 크기 열도 있지만, 여기서는 권한, 소유자, 그룹, 경로만 남겼습니다.
 
 ```text
--rw-r-----  root   docker  /etc/myapp/app.env
+-rw-------  ubuntu ubuntu  /srv/myapp/deploy/app.env
 drwxr-xr-x  ubuntu ubuntu  /srv/myapp
 drwx------  root   root    /var/backups/myapp
 ```
 
-첫 글자는 종류(`-` 파일, `d` 폴더)이고, 나머지 9글자는 세 칸씩 끊어 읽습니다.
+첫 글자는 종류(`-` 파일, `d` 폴더)이고, 나머지 9글자는 세 칸씩 끊어 읽습니다. 두 번째 줄의 소스 폴더를 읽으면 이렇습니다.
 
 ```text
--  rw-  r--  ---
-│  │    │    └─ 그 밖의 모든 사람: 권한 없음
-│  │    └────── 그룹(docker): 읽기만
-│  └─────────── 소유자(root): 읽기, 쓰기
-└────────────── 일반 파일
+d  rwx  r-x  r-x
+│  │    │    └─ 그 밖의 모든 사람: 목록 보기, 들어가기
+│  │    └────── 그룹(ubuntu): 목록 보기, 들어가기
+│  └─────────── 소유자(ubuntu): 목록 보기, 파일 만들기·지우기, 들어가기
+└────────────── 폴더
 ```
 
 | 글자 | 파일에서 | 폴더에서 |
@@ -83,7 +83,7 @@ drwx------  root   root    /var/backups/myapp
 
 | 대상 | 권한 | 이유 |
 |---|---|---|
-| 비밀값 파일 (`app.env`) | 소유자 root 읽기/쓰기, docker 그룹 읽기 | DB 비밀번호 같은 비밀값이 있습니다. `docker compose`를 실행하는 사용자만 읽으면 됩니다 |
+| 비밀값 파일 (`deploy/app.env`) | 소유자 ubuntu만 읽기/쓰기 | DB 비밀번호 같은 비밀값이 있습니다. `docker compose`를 실행하는 ubuntu 사용자만 읽으면 됩니다. 소스 폴더 안에 있으므로 `.gitignore`로 커밋에서 뺍니다 |
 | 백업 폴더 | root만 모든 권한 | 백업에는 회원 정보 같은 데이터가 그대로 들어 있습니다. root 외에는 폴더 안을 볼 수도 없게 합니다 |
 | 소스 코드 폴더 | 소유자 ubuntu, 나머지는 읽기 | 소스 코드는 비밀이 아니고, ubuntu 사용자가 `git pull`로 고칩니다 |
 
@@ -93,9 +93,9 @@ drwx------  root   root    /var/backups/myapp
 
 | 숫자 | 글자 | 흔한 용도 |
 |---|---|---|
-| `600` | `rw-------` | 나만 읽고 쓰는 비밀 파일 (스왑 파일, 비밀값) |
+| `600` | `rw-------` | 나만 읽고 쓰는 비밀 파일 (스왑 파일, `app.env`) |
 | `400` | `r--------` | 나만 읽는 파일 (SSH 개인 키) |
-| `640` | `rw-r-----` | 소유자 읽기/쓰기, 그룹 읽기 (`app.env`) |
+| `640` | `rw-r-----` | 소유자 읽기/쓰기, 그룹 읽기 (같은 그룹에만 보여 줄 설정 파일) |
 | `755` | `rwxr-xr-x` | 누구나 실행할 수 있는 스크립트, 일반 폴더 |
 | `700` | `rwx------` | 나만 쓰는 폴더 (백업 폴더) |
 

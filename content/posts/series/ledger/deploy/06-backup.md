@@ -16,13 +16,13 @@ seriesOrder: 6
 
 ## 백업 스크립트
 
-`deploy/backup.sh`
+`deploy/backup/backup.sh`
 
 ```bash
 #!/usr/bin/env bash
 # 매일 pg_dump 백업. 30일 보관.
-#   sudo install -m 750 deploy/backup.sh /usr/local/bin/ledger-backup
-#   매일 04:10 실행은 deploy/ledger-backup.service·timer (systemd, 서버에 crontab 없음)
+#   sudo install -m 750 deploy/backup/backup.sh /usr/local/bin/ledger-backup
+#   매일 04:10 실행은 deploy/backup/ledger-backup.service·timer (systemd, 서버에 crontab 없음)
 set -euo pipefail
 umask 077   # 덤프에 비밀번호 해시·거래 내역이 있으므로 root 만 읽게
 
@@ -47,7 +47,7 @@ find "$BACKUP_DIR" -name 'ledger-*.dump' -mtime +30 -delete
 
 ## 서비스와 타이머
 
-`deploy/ledger-backup.service`
+`deploy/backup/ledger-backup.service`
 
 ```ini
 [Unit]
@@ -58,7 +58,7 @@ Type=oneshot
 ExecStart=/usr/local/bin/ledger-backup
 ```
 
-`deploy/ledger-backup.timer`
+`deploy/backup/ledger-backup.timer`
 
 ```ini
 [Unit]
@@ -81,9 +81,9 @@ WantedBy=timers.target
 서버의 Ledger 저장소 루트에서 실행합니다. 같은 이름의 기존 파일이 있다면 현재 운영 설정과 비교한 뒤 적용합니다.
 
 ```bash
-sudo install -m 750 deploy/backup.sh /usr/local/bin/ledger-backup
-sudo install -m 644 deploy/ledger-backup.service /etc/systemd/system/ledger-backup.service
-sudo install -m 644 deploy/ledger-backup.timer /etc/systemd/system/ledger-backup.timer
+sudo install -m 750 deploy/backup/backup.sh /usr/local/bin/ledger-backup
+sudo install -m 644 deploy/backup/ledger-backup.service /etc/systemd/system/ledger-backup.service
+sudo install -m 644 deploy/backup/ledger-backup.timer /etc/systemd/system/ledger-backup.timer
 sudo systemctl daemon-reload
 sudo systemctl enable --now ledger-backup.timer
 ```

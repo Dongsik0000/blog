@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 매일 블로그 DB(pg_dump)와 업로드 이미지(tar) 백업. 30일 보관.
-#   sudo install -m 750 deploy/backup.sh /usr/local/bin/blog-backup
-#   매일 04:20 실행은 deploy/blog-backup.service·timer (ledger 백업 04:10 과 겹치지 않게)
+#   sudo install -m 750 deploy/backup/backup.sh /usr/local/bin/blog-backup
+#   매일 04:20 실행은 deploy/backup/blog-backup.service·timer (ledger 백업 04:10 과 겹치지 않게)
 #
 # 글은 처음 한 번만 md 에서 가져오고 이후 수정은 DB 에만 있으므로 DB 백업이 원본이다.
 # 업로드 이미지는 git 에 없으므로 함께 묶는다.

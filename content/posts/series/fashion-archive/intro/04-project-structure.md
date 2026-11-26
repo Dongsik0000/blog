@@ -22,7 +22,7 @@ fashion-archive/
 ├── docker-compose.yml            ← 서버 실행 설정
 ├── deploy/
 │   ├── deploy.sh                 ← GitHub Actions가 서버에서 실행하는 배포 스크립트
-│   ├── nginx-fashion-archive.conf← /p1/, /uploads/ nginx 설정 원본
+│   ├── nginx/fashion-archive.conf← /p1/, /uploads/ nginx 설정 원본
 │   └── OPERATIONS.md             ← 운영 가이드
 ├── docs/                         ← 설계 문서와 구현 계획
 └── .github/workflows/deploy.yml  ← push하면 배포

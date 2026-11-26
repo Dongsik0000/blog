@@ -71,7 +71,7 @@ DB에는 처음부터 **파일이 아니라 공개 주소**(`photo.image_url`)�
 | 파일 | 역할 |
 |---|---|
 | `docker-compose.yml`의 `volumes` | 컨테이너 안 저장 폴더를 서버 폴더(`/srv/fashion-uploads`)에 연결해 컨테이너를 새로 만들어도 사진 유지 |
-| `deploy/nginx-fashion-archive.conf`의 `/uploads/` | 서버 폴더의 사진을 nginx가 직접 보냄 |
+| `deploy/nginx/fashion-archive.conf`의 `/uploads/` | 서버 폴더의 사진을 nginx가 직접 보냄 |
 | `deploy/OPERATIONS.md` | 업로드 폴더와 운영 명령 정리 |
 
 저장 위치를 직접 관리하게 되면서, 파일 권한(다음 글)과 사용자별 폴더, 경로 공격 방어 같은 일도 앱이 맡게 되었습니다([디스크 저장](/posts/fashion-archive-upload-local-storage)).

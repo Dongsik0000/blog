@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Map;
 
-// 관리자 비밀번호 확인. 관리자는 한 명이라 계정 테이블 없이 /etc/blog/app.env 의 BLOG_ADMIN_PASSWORD 와 비교한다
+// 관리자 비밀번호 확인. 관리자는 한 명이라 계정 테이블 없이 deploy/app.env 의 BLOG_ADMIN_PASSWORD 와 비교한다
 @Service("authService")
 public class AuthServiceImpl implements AuthService {
 

@@ -87,7 +87,7 @@ CMD ["catalina.sh", "run"]
 
 Java의 최대 힙은 512MB로 정합니다. 힙은 객체를 저장하는 메모리 영역이며, Compose의 컨테이너 전체 메모리 제한 768MB에는 힙 밖의 사용량도 포함됩니다.
 
-시간대는 한국 시간으로 맞춰 [매일 실행되는 스케줄러](/posts/ledger-domain-scheduler)가 같은 기준을 사용하게 합니다. 운영 로그 기본값은 `INFO`이며, 가입 코드는 `/etc/ledger/app.env`에서 입력합니다.
+시간대는 한국 시간으로 맞춰 [매일 실행되는 스케줄러](/posts/ledger-domain-scheduler)가 같은 기준을 사용하게 합니다. 운영 로그 기본값은 `INFO`이며, 가입 코드는 `deploy/app.env`에서 입력합니다.
 
 상태 확인은 `/p3/manifest.json`을 호출합니다. 로그인 화면은 세션을 만들 수 있으므로, 정적 파일로 웹 앱의 응답을 확인합니다.
 
